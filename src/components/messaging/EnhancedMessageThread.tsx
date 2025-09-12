@@ -637,7 +637,6 @@ const EnhancedMessageThread = ({
                                       </button>
                                     </div>
                                   </div>
-                                </>
                                   {/* INLINE IMAGE DISPLAY - IMPROVED */}
                                   <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 cursor-pointer max-w-xs mt-2"
                                        onClick={() => handleImagePreview(attachmentData.url, attachmentData.name)}>
@@ -666,11 +665,9 @@ const EnhancedMessageThread = ({
                                       }}
                                     />
                                   </div>
-                                  </div>
-                                </>
+                                </div>
                               ) : (
-                                <>
-                                  {/* NON-IMAGE ATTACHMENTS */}
+                                {/* NON-IMAGE ATTACHMENTS */}
                                 <div className="flex items-center justify-between bg-gray-50 p-3 rounded border">
                                   <div className="flex items-center space-x-2">
                                     {getFileIcon(attachmentData.type)}
