@@ -587,7 +587,8 @@ const EnhancedMessageThread = ({
                           return (
                             <div key={index} className="space-y-2">
                               {isImage ? (
-                                <div className="space-y-2">
+                                <>
+                                  <div className="space-y-2">
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-2">
                                       <Image size={16} className="text-blue-600" />
@@ -615,6 +616,7 @@ const EnhancedMessageThread = ({
                                       </button>
                                     </div>
                                   </div>
+                                </>
                                   {/* INLINE IMAGE DISPLAY - IMPROVED */}
                                   <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 cursor-pointer max-w-sm"
                                        onClick={() => handleImagePreview(attachmentData.url, attachmentData.name)}>
@@ -642,9 +644,11 @@ const EnhancedMessageThread = ({
                                       }}
                                     />
                                   </div>
-                                </div>
+                                  </div>
+                                </>
                               ) : (
-                                {/* NON-IMAGE ATTACHMENTS */}
+                                <>
+                                  {/* NON-IMAGE ATTACHMENTS */}
                                 <div className="flex items-center justify-between bg-gray-50 p-3 rounded border">
                                   <div className="flex items-center space-x-2">
                                     {getFileIcon(attachmentData.type)}
