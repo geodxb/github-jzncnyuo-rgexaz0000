@@ -619,9 +619,7 @@ const EnhancedMessageThread = ({
                                      link.download = fileName;
                                      document.body.appendChild(link);
                                      link.click();
-                                      document.body.appendChild(link);
                                      document.body.removeChild(link);
-                                      document.body.removeChild(link);
                                    }
                                  }}
                                  className="p-1 text-gray-600 hover:text-gray-800"
@@ -672,9 +670,6 @@ const EnhancedMessageThread = ({
                             <div>
                               <p className="text-sm font-medium text-gray-900">{attachmentData.name}</p>
                               <p className="text-xs text-gray-500">
-                                  onLoad={() => {
-                                    console.log('Image loaded successfully:', attachmentData.name);
-                                  }}
                                 {attachmentData.size ? (attachmentData.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown size'}
                               </p>
                             </div>
@@ -713,38 +708,40 @@ const EnhancedMessageThread = ({
                             )}
                             <button
                               onClick={() => {
+                                // Handle base64 data URLs and regular URLs for download
                                 const url = attachmentData.url;
                                 const fileName = attachmentData.name || `attachment_${index + 1}`;
                                 
                                 try {
-                                if (url.startsWith('data:')) {
-                                  const byteCharacters = atob(url.split(',')[1]);
-                                  const byteNumbers = new Array(byteCharacters.length);
-                                  for (let i = 0; i < byteCharacters.length; i++) {
-                                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                                  if (url.startsWith('data:')) {
+                                    // For base64 data, create a blob and download it
+                                    const byteCharacters = atob(url.split(',')[1]);
+                                    const byteNumbers = new Array(byteCharacters.length);
+                                    for (let i = 0; i < byteCharacters.length; i++) {
+                                      byteNumbers[i] = byteCharacters.charCodeAt(i);
+                                    }
+                                    const byteArray = new Uint8Array(byteNumbers);
+                                    const blob = new Blob([byteArray], { type: attachmentData.type || 'application/octet-stream' });
+                                    const blobUrl = URL.createObjectURL(blob);
+                                    
+                                    const link = document.createElement('a');
+                                    link.href = blobUrl;
+                                    link.download = fileName;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    URL.revokeObjectURL(blobUrl);
+                                  } else {
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = fileName;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
                                   }
                                 } catch (error) {
                                   console.error('Error downloading file:', error);
                                   alert('Failed to download file. Please try again.');
-                                }
-                                  const byteArray = new Uint8Array(byteNumbers);
-                                  const blob = new Blob([byteArray], { type: attachmentData.type });
-                                  const blobUrl = URL.createObjectURL(blob);
-                                  
-                                  const link = document.createElement('a');
-                                  link.href = blobUrl;
-                                  link.download = fileName;
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
-                                  URL.revokeObjectURL(blobUrl);
-                                } else {
-                                  const link = document.createElement('a');
-                                  link.href = url;
-                                  link.download = fileName;
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
                                 }
                               }}
                               className="p-1 text-gray-600 hover:text-gray-800"
