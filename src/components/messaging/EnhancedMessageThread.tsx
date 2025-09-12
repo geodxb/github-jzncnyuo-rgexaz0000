@@ -214,9 +214,8 @@ const EnhancedMessageThread = ({
   const removeDocument = (documentId: string) => {
     setAttachedDocuments(prev => {
       const updated = prev.filter(doc => doc.id !== documentId);
-      // Only revoke object URLs, not base64 data URLs
       const removedDoc = prev.find(doc => doc.id === documentId);
-      if (removedDoc && removedDoc.url.startsWith('blob:')) {
+      if (removedDoc) {
         URL.revokeObjectURL(removedDoc.url);
       }
       return updated;
@@ -252,12 +251,7 @@ const EnhancedMessageThread = ({
       const messageRole = user.role === 'admin' ? 'admin' : 
                          user.role === 'governor' ? 'governor' : 'affiliate';
 
-      const attachmentUrls = attachedDocuments.map(doc => ({
-        url: doc.url,
-        name: doc.name,
-        type: doc.type,
-        size: doc.size
-      }));
+      const attachmentUrls = attachedDocuments.map(doc => doc.url);
 
       try {
         const messageId = await EnhancedMessageService.sendEnhancedMessage(
@@ -638,26 +632,25 @@ const EnhancedMessageThread = ({
                                       </div>
                                     </div>
                                     {/* INLINE IMAGE DISPLAY - IMPROVED */}
-                                    <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 cursor-pointer max-w-xs mt-2"
+                                    <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 cursor-pointer max-w-sm"
                                          onClick={() => handleImagePreview(attachmentData.url, attachmentData.name)}>
                                       <img 
                                         src={attachmentData.url} 
                                         alt={attachmentData.name}
-                                        className="w-full h-auto max-h-32 object-cover hover:scale-105 transition-transform duration-200"
-                                        loading="lazy"
+                                        className="w-full h-auto max-h-48 object-cover hover:scale-105 transition-transform duration-200"
                                         onError={(e) => {
                                           const target = e.target as HTMLImageElement;
                                           // Hide broken image and show fallback
                                           const parent = target.parentElement;
                                           if (parent) {
                                             parent.innerHTML = `
-                                              <div class="p-3 text-center text-gray-500 bg-gray-100 border border-gray-300 rounded">
+                                              <div class="p-4 text-center text-gray-500 bg-gray-100 border border-gray-300 rounded">
                                                 <div class="flex items-center justify-center mb-2">
-                                                  <div class="w-6 h-6 bg-gray-300 rounded flex items-center justify-center">
+                                                  <div class="w-8 h-8 bg-gray-300 rounded flex items-center justify-center">
                                                     <span class="text-gray-600 text-xs">IMG</span>
                                                   </div>
                                                 </div>
-                                                <p class="text-xs font-medium text-gray-700">Image could not be displayed</p>
+                                                <p class="text-sm font-medium text-gray-700">Image could not be displayed</p>
                                                 <p class="text-xs text-gray-500 mt-1">${attachmentData.name}</p>
                                               </div>
                                             `;
@@ -668,36 +661,38 @@ const EnhancedMessageThread = ({
                                   </div>
                                 </>
                               ) : (
-                                /* NON-IMAGE ATTACHMENTS */
-                                <div className="flex items-center justify-between bg-gray-50 p-3 rounded border">
-                                  <div className="flex items-center space-x-2">
-                                    {getFileIcon(attachmentData.type)}
-                                    <div>
-                                      <p className="text-sm font-medium text-gray-900">{attachmentData.name}</p>
-                                      <p className="text-xs text-gray-500">
-                                        {attachmentData.size > 0 ? (attachmentData.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown size'}
-                                      </p>
+                                <>
+                                  {/* NON-IMAGE ATTACHMENTS */}
+                                  <div className="flex items-center justify-between bg-gray-50 p-3 rounded border">
+                                    <div className="flex items-center space-x-2">
+                                      {getFileIcon(attachmentData.type)}
+                                      <div>
+                                        <p className="text-sm font-medium text-gray-900">{attachmentData.name}</p>
+                                        <p className="text-xs text-gray-500">
+                                          {attachmentData.size > 0 ? (attachmentData.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown size'}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center space-x-1">
+                                      {isPDF && (
+                                        <button
+                                          onClick={() => window.open(attachmentData.url, '_blank')}
+                                          className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
+                                          title="View document"
+                                        >
+                                          <Eye size={14} />
+                                        </button>
+                                      )}
+                                      <button
+                                        onClick={() => handleFileDownload(attachmentData.url, attachmentData.name)}
+                                        className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
+                                        title="Download document"
+                                      >
+                                        <Download size={14} />
+                                      </button>
                                     </div>
                                   </div>
-                                  <div className="flex items-center space-x-1">
-                                    {isPDF && (
-                                      <button
-                                        onClick={() => window.open(attachmentData.url, '_blank')}
-                                        className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
-                                        title="View document"
-                                      >
-                                        <Eye size={14} />
-                                      </button>
-                                    )}
-                                    <button
-                                      onClick={() => handleFileDownload(attachmentData.url, attachmentData.name)}
-                                      className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
-                                      title="Download document"
-                                    >
-                                      <Download size={14} />
-                                    </button>
-                                  </div>
-                                </div>
+                                </>
                               )}
                             </div>
                           );
