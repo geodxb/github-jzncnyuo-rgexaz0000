@@ -671,48 +671,73 @@ const EnhancedMessageThread = ({
                                         // Download image
                                         const url = attachmentData.url;
                                         const fileName = attachmentData.name || `image_${index + 1}.png`;
-                        return (
-                          <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded border">
-                            <div className="flex items-center space-x-2">
-                              {getFileIcon(attachment.type || 'unknown')}
-                              <div>
-                                <p className="text-sm font-medium text-gray-900">{attachment.name || `Attachment ${index + 1}`}</p>
-                                <p className="text-xs text-gray-500">
-                                  {attachment.size ? (attachment.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown size'}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <button
-                                onClick={() => window.open(attachment.url || attachment, '_blank')}
-                                className="p-1 text-gray-600 hover:text-gray-800"
-                                title="View document"
-                              >
-                                <Eye size={14} />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  const link = document.createElement('a');
-                                  link.href = attachment.url || attachment;
-                                  link.download = attachment.name || `attachment_${index + 1}`;
-                                  link.click();
-                                }}
-                                className="p-1 text-gray-600 hover:text-gray-800"
-                                title="Download document"
-                              >
-                                <Download size={14} />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                                       }
+                                        
+                                        try {
+                                          // Handle base64 data URLs and regular URLs for download
+                                          if (url.startsWith('data:')) {
+                                            // For base64 data, create a blob and download it
+                                            const byteCharacters = atob(url.split(',')[1]);
+                                            const byteNumbers = new Array(byteCharacters.length);
+                                            for (let i = 0; i < byteCharacters.length; i++) {
+                                              byteNumbers[i] = byteCharacters.charCodeAt(i);
+                                            }
+                                            const byteArray = new Uint8Array(byteNumbers);
+                                            const blob = new Blob([byteArray], { type: attachmentData.type || 'application/octet-stream' });
+                                            const blobUrl = URL.createObjectURL(blob);
+                                            
+                                            const link = document.createElement('a');
+                                            link.href = blobUrl;
+                                            link.download = fileName;
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            document.body.removeChild(link);
+                                            URL.revokeObjectURL(blobUrl);
+                                          } else {
+                                            const link = document.createElement('a');
+                                            link.href = url;
+                                            link.download = fileName;
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            document.body.removeChild(link);
+                                          }
+                                        } catch (error) {
+                                          console.error('Error downloading file:', error);
+                                          alert('Failed to download file. Please try again.');
+                                        }
+                                      }}
+                                      className="p-1 text-gray-600 hover:text-gray-800"
+                                      title="Download image"
+                                    >
+                                      <Download size={14} />
+                                    </button>
+                                  </div>
+                                  <img 
+                                    src={attachmentData.url} 
+                                    alt={attachmentData.name}
+                                    className="w-full h-auto max-h-80 object-contain rounded border"
+                                  />
+                                </>
+                              ) : (
+                                <div className="flex items-center justify-between bg-gray-50 p-2 rounded border">
+                                  <div className="flex items-center space-x-2">
+                                    {getFileIcon(attachmentData.type)}
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-900">{attachmentData.name}</p>
+                                      <p className="text-xs text-gray-500">
+                                        {attachmentData.size ? (attachmentData.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown size'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center space-x-1">
+                                    <button
+                                      onClick={() => {
+                                        window.open(attachmentData.url, '_blank');
                                       }}
                                       className="p-1 text-gray-600 hover:text-gray-800"
                                       title="View document"
                                     >
                                       <Eye size={14} />
                                     </button>
-                                   )}
                                     <button
                                       onClick={() => {
                                        try {
