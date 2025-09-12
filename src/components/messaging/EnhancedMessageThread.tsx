@@ -430,6 +430,49 @@ const EnhancedMessageThread = ({
                     {message.content}
                   </div>
                   
+                  {/* Message Attachments */}
+                  {message.attachments && message.attachments.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                        ATTACHMENTS ({message.attachments.length}):
+                      </p>
+                      {message.attachments.map((attachment, index) => (
+                        <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded border">
+                          <div className="flex items-center space-x-2">
+                            {getFileIcon(attachment.type || 'unknown')}
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{attachment.name || `Attachment ${index + 1}`}</p>
+                              <p className="text-xs text-gray-500">
+                                {attachment.size ? (attachment.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown size'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <button
+                              onClick={() => window.open(attachment.url || attachment, '_blank')}
+                              className="p-1 text-gray-600 hover:text-gray-800"
+                              title="View document"
+                            >
+                              <Eye size={14} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = attachment.url || attachment;
+                                link.download = attachment.name || `attachment_${index + 1}`;
+                                link.click();
+                              }}
+                              className="p-1 text-gray-600 hover:text-gray-800"
+                              title="Download document"
+                            >
+                              <Download size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
                   {/* Message footer */}
                   <div className="flex items-center justify-between text-xs">
                     <span className={`${
@@ -482,15 +525,84 @@ const EnhancedMessageThread = ({
         </div>
       )}
 
+      {/* Attached Documents */}
+      {attachedDocuments.length > 0 && (
+        <div className="px-6 py-3 bg-gray-100 border-t border-gray-200">
+          <div className="mb-3 space-y-2">
+            <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+              ATTACHED DOCUMENTS ({attachedDocuments.length}):
+            </p>
+            {attachedDocuments.map((doc) => (
+              <div key={doc.id} className="flex items-center justify-between bg-gray-50 p-2 rounded border">
+                <div className="flex items-center space-x-2">
+                  {getFileIcon(doc.type)}
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{doc.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {(doc.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => removeDocument(doc.id)}
+                  className="p-1 text-red-600 hover:text-red-800"
+                  title="Remove document"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Upload Error */}
+      {uploadError && (
+        <div className="px-6 py-3 bg-red-50 border-t border-red-200">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-sm">
+            <div className="flex items-center space-x-2">
+              <AlertTriangle size={14} />
+              <span className="font-medium uppercase tracking-wide">{uploadError}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Message Input */}
       <div className="px-4 py-2 bg-white border-t border-gray-200">
         <div className="flex items-end space-x-3">
+          {/* File Upload Button */}
+          <div className="flex-shrink-0">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.jpg,.jpeg,.png,.txt,.doc,.docx,.xlsx,.ppt,.pptx"
+              onChange={handleFileUpload}
+              className="hidden"
+              disabled={isUploading}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+              title="Attach files"
+            >
+              {isUploading ? (
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <Paperclip size={16} />
+              )}
+            </button>
+          </div>
+
           <div className="flex-1">
             <textarea
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Type your message..."
+              placeholder={attachedDocuments.length > 0 ? "Add a message (optional)..." : "Type your message..."}
               disabled={isLoading}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-300 focus:border-gray-300 resize-none font-medium text-sm"
               rows={2}
@@ -500,7 +612,7 @@ const EnhancedMessageThread = ({
           <div className="flex flex-col space-y-2">
             <button
               onClick={handleSendMessage}
-              disabled={!newMessage.trim() || isLoading}
+              disabled={(!newMessage.trim() && attachedDocuments.length === 0) || isLoading || isUploading}
               className="p-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isLoading ? (
@@ -516,6 +628,10 @@ const EnhancedMessageThread = ({
           <span className="uppercase tracking-wide">Press Enter to send, Shift+Enter for new line</span>
           <span className="uppercase tracking-wide">{newMessage.length}/1000</span>
         </div>
+        
+        <p className="text-xs text-gray-500 mt-1 uppercase tracking-wide">
+          SUPPORTED FILES: PDF, JPG, PNG, TXT, DOC, DOCX, XLSX, PPT (MAX 10MB EACH)
+        </p>
       </div>
 
       {/* Escalation Modal */}

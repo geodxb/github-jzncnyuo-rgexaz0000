@@ -27,7 +27,8 @@ export class MessageService {
     conversationId?: string,
     replyTo?: string,
     priority: 'low' | 'medium' | 'high' = 'medium',
-    department?: string
+    department?: string,
+    attachments?: string[]
   ): Promise<string> {
     try {
       console.log('📨 Sending message from:', senderName, 'Role:', senderRole);
@@ -51,6 +52,7 @@ export class MessageService {
         priority,
         status: 'sent',
         department: department || null,
+        attachments: attachments || [],
         createdAt: serverTimestamp()
       };
       

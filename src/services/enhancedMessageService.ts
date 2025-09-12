@@ -116,7 +116,8 @@ export class EnhancedMessageService {
     replyTo?: string,
     isEscalation: boolean = false,
     escalationReason?: string,
-    messageType: 'text' | 'system' | 'escalation' | 'resolution' = 'text'
+    messageType: 'text' | 'system' | 'escalation' | 'resolution' = 'text',
+    attachments?: string[]
   ): Promise<string> {
     try {
       console.log('📨 Sending enhanced message:', {
@@ -142,6 +143,7 @@ export class EnhancedMessageService {
         readBy: [],
         messageType: isEscalation ? 'escalation' : messageType,
         attachments: []
+        attachments: attachments || [],
       };
 
       const docRef = await addDoc(collection(db, 'affiliateMessages'), {

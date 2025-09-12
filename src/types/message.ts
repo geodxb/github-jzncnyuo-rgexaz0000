@@ -20,6 +20,8 @@ export interface MessageAttachment {
   type: string;
   size: number;
   url: string;
+  uploadedAt?: Date;
+  uploadedBy?: string;
 }
 export interface Conversation {
   id: string;
