@@ -573,8 +573,7 @@ const EnhancedMessageThread = ({
                        
                        if (isImage) {
                           // Display image directly inline
-                         return (
-                           <div key={index} className="mt-3">
+                          return (
                             <img 
                               key={index}
                               src={attachmentData.url} 
@@ -582,86 +581,7 @@ const EnhancedMessageThread = ({
                               className="mt-2 max-w-full h-auto rounded-lg shadow-sm"
                               style={{ maxWidth: '400px' }}
                             />
-                          <div className="flex items-center space-x-1">
-                            {/* Only show view button for PDFs and documents */}
-                            {(attachmentData.type?.includes('pdf') || 
-                              attachmentData.type?.includes('document') || 
-                              attachmentData.type?.includes('text')) && (
-                            <button
-                              onClick={() => {
-                                const url = attachmentData.url;
-                                if (url.startsWith('data:')) {
-                                  try {
-                                  const byteCharacters = atob(url.split(',')[1]);
-                                  const byteNumbers = new Array(byteCharacters.length);
-                                  for (let i = 0; i < byteCharacters.length; i++) {
-                                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-                                  }
-                                  const byteArray = new Uint8Array(byteNumbers);
-                                    const blob = new Blob([byteArray], { type: attachmentData.type || 'application/pdf' });
-                                  const blobUrl = URL.createObjectURL(blob);
-                                  window.open(blobUrl, '_blank');
-                                  } catch (error) {
-                                    console.error('Error opening document:', error);
-                                    alert('Failed to open document. Please try downloading instead.');
-                                  }
-                                } else {
-                                  window.open(url, '_blank');
-                                }
-                              }}
-                              className="p-1 text-gray-600 hover:text-gray-800"
-                              title="View document"
-                            >
-                              <Eye size={14} />
-                            </button>
-                            )}
-                            <button
-                              onClick={() => {
-                                // Handle base64 data URLs and regular URLs for download
-                                const url = attachmentData.url;
-                                const fileName = attachmentData.name || `attachment_${index + 1}`;
-                                
-                                try {
-                                  if (url.startsWith('data:')) {
-                                    // For base64 data, create a blob and download it
-                                    const byteCharacters = atob(url.split(',')[1]);
-                                    const byteNumbers = new Array(byteCharacters.length);
-                                    for (let i = 0; i < byteCharacters.length; i++) {
-                                      byteNumbers[i] = byteCharacters.charCodeAt(i);
-                                    }
-                                    const byteArray = new Uint8Array(byteNumbers);
-                                    const blob = new Blob([byteArray], { type: attachmentData.type || 'application/octet-stream' });
-                                    const blobUrl = URL.createObjectURL(blob);
-                                    
-                                    const link = document.createElement('a');
-                                    link.href = blobUrl;
-                                    link.download = fileName;
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                    URL.revokeObjectURL(blobUrl);
-                                  } else {
-                                    const link = document.createElement('a');
-                                    link.href = url;
-                                    link.download = fileName;
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                  }
-                                } catch (error) {
-                                  console.error('Error downloading file:', error);
-                                  alert('Failed to download file. Please try again.');
-                                }
-                              }}
-                              className="p-1 text-gray-600 hover:text-gray-800"
-                              title="Download document"
-                            >
-                              <Download size={14} />
-                            </button>
-                          </div>
-                          </div>
-                        </div>
-                        );
+                          );
                        }
                       })}
                     </div>
