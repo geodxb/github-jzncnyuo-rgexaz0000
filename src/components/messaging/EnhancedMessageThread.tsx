@@ -24,7 +24,8 @@ import {
   FileText,
   Image,
   File,
-  X
+  X,
+  ZoomIn
 } from 'lucide-react';
 
 // Interface for uploaded documents
@@ -62,13 +63,15 @@ const EnhancedMessageThread = ({
   const [attachedDocuments, setAttachedDocuments] = useState<UploadedDocument[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [previewImageUrl, setPreviewImageUrl] = useState<string>('');
+  const [previewImageName, setPreviewImageName] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Merge and sort messages from both collections
   useEffect(() => {
     if (!enhancedLoading && !regularLoading) {
-      // Merge both enhanced and regular messages to ensure all messages are shown
       const allMessagesList = [];
       
       // Add enhanced messages
@@ -91,7 +94,6 @@ const EnhancedMessageThread = ({
           allMessagesList.push({
             ...msg,
             source: 'regular',
-            // Convert regular message format to enhanced format
             senderRole: msg.senderRole || 'affiliate',
             priority: msg.priority || 'medium',
             status: msg.status || 'sent',
@@ -114,7 +116,7 @@ const EnhancedMessageThread = ({
       setLoading(true);
     }
   }, [enhancedMessages, regularMessages, enhancedLoading, regularLoading]);
-  
+
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -178,7 +180,7 @@ const EnhancedMessageThread = ({
           continue;
         }
 
-        // Convert file to base64 for storage and viewing
+        // Convert file to base64 for storage
         const base64Data = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result as string);
@@ -203,7 +205,6 @@ const EnhancedMessageThread = ({
       setUploadError('Failed to upload files. Please try again.');
     } finally {
       setIsUploading(false);
-      // Reset file input
       if (event.target) {
         event.target.value = '';
       }
@@ -212,10 +213,67 @@ const EnhancedMessageThread = ({
 
   // Remove document from attached list
   const removeDocument = (documentId: string) => {
-    setAttachedDocuments(prev => {
-      const updated = prev.filter(doc => doc.id !== documentId);
-      return updated;
-    });
+    setAttachedDocuments(prev => prev.filter(doc => doc.id !== documentId));
+  };
+
+  // Handle image preview
+  const handleImagePreview = (imageUrl: string, imageName: string) => {
+    setPreviewImageUrl(imageUrl);
+    setPreviewImageName(imageName);
+    setShowImagePreview(true);
+  };
+
+  // Handle file download
+  const handleFileDownload = (fileUrl: string, fileName: string) => {
+    try {
+      if (fileUrl.startsWith('data:')) {
+        // Handle base64 data URLs
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // Handle regular URLs
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = fileName;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Download failed. Please try again.');
+    }
+  };
+
+  // Handle file view (for PDFs)
+  const handleFileView = (fileUrl: string) => {
+    try {
+      if (fileUrl.startsWith('data:')) {
+        // Create blob URL for viewing
+        const byteCharacters = atob(fileUrl.split(',')[1]);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+        const blobUrl = URL.createObjectURL(blob);
+        window.open(blobUrl, '_blank');
+        
+        // Clean up blob URL after a delay
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      } else {
+        window.open(fileUrl, '_blank');
+      }
+    } catch (error) {
+      console.error('View failed:', error);
+      alert('Unable to view file. Please try downloading instead.');
+    }
   };
 
   const handleSendMessage = async () => {
@@ -233,14 +291,11 @@ const EnhancedMessageThread = ({
         attachmentCount: attachedDocuments.length
       });
 
-      // Determine user role for message service
       const messageRole = user.role === 'admin' ? 'admin' : 
                          user.role === 'governor' ? 'governor' : 'affiliate';
 
-      // Prepare attachments for sending
       const attachmentUrls = attachedDocuments.map(doc => doc.url);
 
-      // Try enhanced message service first
       try {
         const messageId = await EnhancedMessageService.sendEnhancedMessage(
           conversationId,
@@ -260,7 +315,6 @@ const EnhancedMessageThread = ({
       } catch (enhancedError) {
         console.log('⚠️ Enhanced message failed, using regular message service:', enhancedError);
         
-        // Fallback to regular message service
         const messageId = await MessageService.sendMessage(
           user.id,
           user.name,
@@ -268,7 +322,7 @@ const EnhancedMessageThread = ({
           newMessage.trim(),
           conversationId,
           replyingTo?.id,
-          'priority',
+          'medium',
           conversation?.department,
           attachmentUrls
         );
@@ -281,7 +335,6 @@ const EnhancedMessageThread = ({
       console.log('✅ Message form reset');
     } catch (error) {
       console.error('Error sending enhanced message:', error);
-      // Show user-friendly error
       alert('Failed to send message. Please try again.');
     } finally {
       setIsLoading(false);
@@ -402,7 +455,6 @@ const EnhancedMessageThread = ({
           </div>
           
           <div className="flex items-center space-x-3">
-            {/* Escalation Button for Admin */}
             {canEscalate && (
               <button
                 onClick={() => setShowEscalationModal(true)}
@@ -413,7 +465,6 @@ const EnhancedMessageThread = ({
               </button>
             )}
             
-            {/* Join Conversation Button for Governor */}
             {user?.role === 'governor' && !isParticipant && onJoinConversation && (
               <button
                 onClick={onJoinConversation}
@@ -433,7 +484,7 @@ const EnhancedMessageThread = ({
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-50 min-h-0">
+      <div className="flex-1 overflow-y-auto p-6 bg-gray-50 min-h-0">
         {allMessages.length === 0 ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -447,15 +498,15 @@ const EnhancedMessageThread = ({
             </p>
           </div>
         ) : (
-          <>
+          <div className="space-y-6">
             {/* Governor Join Banner */}
             {allMessages.some(msg => 
               msg.messageType === 'system' && 
               msg.content.includes('MANAGEMENT OVERSIGHT ACTIVATED')
             ) && (
-              <div className="bg-gray-100 border border-gray-300 p-4 mb-4">
+              <div className="bg-gray-100 border border-gray-300 p-4 rounded-lg">
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-gray-200 border border-gray-400 flex items-center justify-center">
+                  <div className="w-8 h-8 bg-gray-200 border border-gray-400 flex items-center justify-center rounded-lg">
                     <User size={16} className="text-gray-700" />
                   </div>
                   <div>
@@ -469,72 +520,99 @@ const EnhancedMessageThread = ({
                 </div>
               </div>
             )}
-
-            <AnimatePresence>
-              {allMessages.map((message, index) => (
+            
+            <AnimatePresence initial={false}>
+              {allMessages.map((message) => (
                 <motion.div
-                  key={message.id || index}
-                  initial={{ opacity: 0, y: 20 }}
+                  key={message.id}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
+                  exit={{ opacity: 0, y: -10 }}
                   className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className={`max-w-[70%] ${
-                    message.senderId === user?.id 
-                      ? 'bg-gray-900 text-white' 
-                      : 'bg-white border border-gray-200'
-                  } rounded-lg p-4 shadow-sm ${getPriorityColor(message.priority || 'medium')} border-l-4`}>
+                  <div
+                    className={`max-w-[85%] ${
+                      message.senderId === user?.id
+                        ? 'bg-gray-900 text-white'
+                        : message.messageType === 'escalation'
+                        ? 'bg-gray-100 text-gray-800 border border-gray-300'
+                        : message.messageType === 'system'
+                        ? 'bg-gray-100 text-gray-800 border border-gray-300'
+                        : 'bg-white text-gray-800 border border-gray-200'
+                    } rounded-lg p-4 shadow-sm border-l-4 ${getPriorityColor(message.priority)} break-words`}
+                  >
+                    {/* Reply indicator */}
+                    {message.replyTo && (
+                      <div className="mb-3 pb-2 border-b border-gray-300 opacity-75">
+                        <div className="flex items-center space-x-1 text-xs">
+                          <Reply size={12} />
+                          <span>Replying to message</span>
+                        </div>
+                      </div>
+                    )}
                     
                     {/* Message header */}
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center space-x-2">
-                        {getRoleIcon(message.senderRole)}
-                        <span className={`text-xs font-bold uppercase tracking-wide ${
+                        <span className={`text-xs font-medium uppercase tracking-wide ${
                           message.senderId === user?.id ? 'text-gray-300' : 'text-gray-600'
                         }`}>
-                          {message.senderName} • {getRoleLabel(message.senderRole)}
+                          {message.senderName}
                         </span>
+                        <div className="flex items-center space-x-1">
+                          {getRoleIcon(message.senderRole)}
+                          <span className={`px-2 py-1 text-xs rounded-full font-medium uppercase tracking-wide ${
+                            message.senderRole === 'governor' 
+                              ? 'bg-gray-800 text-white' 
+                              : message.senderRole === 'admin'
+                              ? 'bg-gray-600 text-white'
+                              : 'bg-gray-500 text-white'
+                          }`}>
+                            {getRoleLabel(message.senderRole)}
+                          </span>
+                        </div>
+                        {message.department && (
+                          <span className="px-2 py-1 text-xs rounded-full font-medium uppercase tracking-wide bg-gray-200 text-gray-800">
+                            {message.department}
+                          </span>
+                        )}
+                        {message.isEscalation && (
+                          <span className="px-2 py-1 text-xs font-medium uppercase tracking-wide bg-gray-100 text-gray-800 border border-gray-300">
+                            <ArrowUp size={10} className="mr-1 inline" />
+                            ESCALATION
+                          </span>
+                        )}
                       </div>
                       
-                      {/* Reply button */}
                       {message.senderId !== user?.id && (
                         <button
                           onClick={() => setReplyingTo(message)}
-                          className={`p-1 rounded hover:bg-gray-100 ${
-                            message.senderId === user?.id ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-500'
+                          className={`p-1 rounded hover:bg-gray-100 transition-colors ${
+                            message.senderId === user?.id ? 'text-gray-300' : 'text-gray-500'
                           }`}
                         >
-                          <Reply size={12} />
+                          <Reply size={14} />
                         </button>
                       )}
                     </div>
-
-                    {/* Reply indicator */}
-                    {message.replyTo && (
-                      <div className={`mb-3 p-2 rounded border-l-2 ${
-                        message.senderId === user?.id 
-                          ? 'bg-gray-800 border-gray-600 text-gray-300' 
-                          : 'bg-gray-50 border-gray-300 text-gray-600'
-                      }`}>
-                        <p className="text-xs font-medium uppercase tracking-wide">
-                          Replying to message
-                        </p>
+                    
+                    {/* Escalation reason */}
+                    {message.isEscalation && message.escalationReason && (
+                      <div className="mb-3 p-2 bg-gray-100 border border-gray-300 rounded text-xs">
+                        <strong>Escalation Reason:</strong> {message.escalationReason}
                       </div>
                     )}
-
-                    {/* Message content */}
-                    <div className="mb-3">
-                      <p className={`text-sm leading-relaxed ${
-                        message.senderId === user?.id ? 'text-white' : 'text-gray-900'
-                      }`}>
+                    
+                    {/* Message content with proper line breaks */}
+                    <div className="mb-4">
+                      <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                         {message.content}
-                      </p>
+                      </div>
                     </div>
-
+                    
                     {/* Message Attachments */}
                     {message.attachments && message.attachments.length > 0 && (
-                      <div className="mt-3 space-y-2">
+                      <div className="mt-4 space-y-3">
                         <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">
                           ATTACHMENTS ({message.attachments.length}):
                         </p>
@@ -547,186 +625,92 @@ const EnhancedMessageThread = ({
                                         attachmentData.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) ||
                                         attachmentData.url?.startsWith('data:image/');
                           
+                          const isPDF = attachmentData.type?.includes('pdf') || 
+                                      attachmentData.name?.toLowerCase().endsWith('.pdf');
+
                           return (
-                            <div key={index} className="mt-3">
+                            <div key={index} className="space-y-2">
                               {isImage ? (
-                                <div>
-                                  <div className="flex items-center justify-between mb-2">
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-2">
                                       <Image size={16} className="text-blue-600" />
                                       <span className="text-sm font-medium text-gray-900">{attachmentData.name}</span>
+                                      {attachmentData.size > 0 && (
+                                        <span className="text-xs text-gray-500">
+                                          {(attachmentData.size / 1024 / 1024).toFixed(2)} MB
+                                        </span>
+                                      )}
                                     </div>
-                                    <button
-                                      onClick={() => {
-                                        const link = document.createElement('a');
-                                        link.href = attachmentData.url;
-                                        link.download = attachmentData.name || 'image.png';
-                                        document.body.appendChild(link);
-                                        link.click();
-                                        document.body.removeChild(link);
-                                      }}
-                                      className="p-1 text-gray-600 hover:text-gray-800"
-                                      title="Download image"
-                                    >
-                                      <Download size={14} />
-                                    </button>
+                                    <div className="flex items-center space-x-1">
+                                      <button
+                                        onClick={() => handleImagePreview(attachmentData.url, attachmentData.name)}
+                                        className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
+                                        title="Preview image"
+                                      >
+                                        <ZoomIn size={14} />
+                                      </button>
+                                      <button
+                                        onClick={() => handleFileDownload(attachmentData.url, attachmentData.name)}
+                                        className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
+                                        title="Download image"
+                                      >
+                                        <Download size={14} />
+                                      </button>
+                                    </div>
                                   </div>
-                                  <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                                  {/* Inline image display */}
+                                  <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 cursor-pointer"
+                                       onClick={() => handleImagePreview(attachmentData.url, attachmentData.name)}>
                                     <img 
                                       src={attachmentData.url} 
                                       alt={attachmentData.name}
-                                      className="w-full h-auto max-h-96 object-contain"
+                                      className="w-full h-auto max-h-64 object-contain"
                                       onError={(e) => {
                                         const target = e.target as HTMLImageElement;
                                         target.style.display = 'none';
                                         if (target.parentElement) {
-                                          target.parentElement.innerHTML = '<div class="p-4 text-center text-gray-500">Image could not be displayed</div>';
+                                          target.parentElement.innerHTML = `
+                                            <div class="p-4 text-center text-gray-500 bg-gray-100 border border-gray-300 rounded">
+                                              <div class="flex items-center justify-center mb-2">
+                                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                </svg>
+                                              </div>
+                                              <p class="text-sm font-medium text-gray-700">Image could not be displayed</p>
+                                              <p class="text-xs text-gray-500 mt-1">${attachmentData.name}</p>
+                                            </div>
+                                          `;
                                         }
                                       }}
                                     />
                                   </div>
                                 </div>
                               ) : (
-                                <div className="flex items-center justify-between bg-gray-50 p-2 rounded border">
+                                <div className="flex items-center justify-between bg-gray-50 p-3 rounded border">
                                   <div className="flex items-center space-x-2">
                                     {getFileIcon(attachmentData.type)}
                                     <div>
                                       <p className="text-sm font-medium text-gray-900">{attachmentData.name}</p>
                                       <p className="text-xs text-gray-500">
-                                        {attachmentData.size ? (attachmentData.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown size'}
+                                        {attachmentData.size > 0 ? (attachmentData.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown size'}
                                       </p>
                                     </div>
                                   </div>
                                   <div className="flex items-center space-x-1">
+                                    {isPDF && (
+                                      <button
+                                        onClick={() => handleFileView(attachmentData.url)}
+                                        className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
+                                        title="View document"
+                                      >
+                                        <Eye size={14} />
+                                      </button>
+                                    )}
                                     <button
-                                      onClick={() => {
-                                        const link = document.createElement('a');
-                                        link.href = attachmentData.url;
-                                        link.download = attachmentData.name || 'file';
-                                        document.body.appendChild(link);
-                                        link.click();
-                                        document.body.removeChild(link);
-                                      }}
-                                      className="p-1 text-gray-600 hover:text-gray-800"
-                                      title="Download file"
-                                    >
-                                      <Download size={14} />
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* Attachments */}
-                    {message.attachmentUrls && message.attachmentUrls.length > 0 && (
-                      <div className="mb-3 space-y-2">
-                        {message.attachmentUrls.map((attachmentUrl: string, index: number) => {
-                          // Parse attachment data from URL
-                          let attachmentData: any = {};
-                          
-                          try {
-                            if (attachmentUrl.startsWith('data:')) {
-                              // Extract MIME type from data URL
-                              const mimeMatch = attachmentUrl.match(/data:([^;]+)/);
-                              attachmentData.type = mimeMatch ? mimeMatch[1] : 'unknown';
-                              attachmentData.url = attachmentUrl;
-                              attachmentData.name = `attachment_${index + 1}`;
-                              
-                              // Try to determine file extension from MIME type
-                              if (attachmentData.type.includes('pdf')) {
-                                attachmentData.name += '.pdf';
-                              } else if (attachmentData.type.includes('image/jpeg')) {
-                                attachmentData.name += '.jpg';
-                              } else if (attachmentData.type.includes('image/png')) {
-                                attachmentData.name += '.png';
-                              } else if (attachmentData.type.includes('text')) {
-                                attachmentData.name += '.txt';
-                              }
-                            } else {
-                              // Regular URL
-                              attachmentData.url = attachmentUrl;
-                              attachmentData.name = attachmentUrl.split('/').pop() || `attachment_${index + 1}`;
-                              attachmentData.type = 'unknown';
-                            }
-                          } catch (error) {
-                            console.error('Error parsing attachment:', error);
-                            attachmentData = {
-                              url: attachmentUrl,
-                              name: `attachment_${index + 1}`,
-                              type: 'unknown'
-                            };
-                          }
-
-                          const isImage = attachmentData.type?.includes('image');
-
-                          return (
-                            <div key={index} className="mt-2">
-                              {isImage ? (
-                                <>
-                                  <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center space-x-2">
-                                      <Image size={16} className="text-blue-600" />
-                                      <span className="text-sm font-medium text-gray-900">{attachmentData.name}</span>
-                                    </div>
-                                    <button
-                                      onClick={() => {
-                                        // Download image
-                                        const url = attachmentData.url;
-                                        const fileName = attachmentData.name || `image_${index + 1}.png`;
-                                        
-                                        const a = document.createElement('a');
-                                        a.href = url;
-                                        a.download = fileName;
-                                        document.body.appendChild(a);
-                                        a.click();
-                                        document.body.removeChild(a);
-                                      }}
-                                      className="p-1 text-gray-600 hover:text-gray-800"
-                                      title="Download image"
-                                    >
-                                      <Download size={14} />
-                                    </button>
-                                  </div>
-                                  <img 
-                                    src={attachmentData.url} 
-                                    alt={attachmentData.name}
-                                    className="w-full h-auto max-h-80 object-contain rounded border"
-                                  />
-                                </>
-                              ) : (
-                                <div className="flex items-center justify-between bg-gray-50 p-2 rounded border">
-                                  <div className="flex items-center space-x-2">
-                                    {getFileIcon(attachmentData.type)}
-                                    <div>
-                                      <p className="text-sm font-medium text-gray-900">{attachmentData.name}</p>
-                                      <p className="text-xs text-gray-500">
-                                        {attachmentData.size ? (attachmentData.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown size'}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center space-x-1">
-                                    <button
-                                      onClick={() => {
-                                        window.open(attachmentData.url, '_blank');
-                                      }}
-                                      className="p-1 text-gray-600 hover:text-gray-800"
-                                    >
-                                      <Eye size={14} />
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        const a = document.createElement('a');
-                                        a.href = attachmentData.url;
-                                        a.download = attachmentData.name || 'file';
-                                        document.body.appendChild(a);
-                                        a.click();
-                                        document.body.removeChild(a);
-                                      }}
-                                      className="p-1 text-gray-600 hover:text-gray-800"
+                                      onClick={() => handleFileDownload(attachmentData.url, attachmentData.name)}
+                                      className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
+                                      title="Download document"
                                     >
                                       <Download size={14} />
                                     </button>
@@ -740,14 +724,13 @@ const EnhancedMessageThread = ({
                     )}
                     
                     {/* Message footer */}
-                    <div className="flex items-center justify-between text-xs">
+                    <div className="flex items-center justify-between text-xs mt-3">
                       <span className={`${
                         message.senderId === user?.id ? 'text-gray-300' : 'text-gray-500'
                       }`}>
                         {formatTime(message.timestamp)}
                       </span>
                       
-                      {/* Read receipts */}
                       {message.readBy && message.readBy.length > 0 && (
                         <div className="flex items-center space-x-1">
                           <Eye size={10} />
@@ -763,7 +746,7 @@ const EnhancedMessageThread = ({
                 </motion.div>
               ))}
             </AnimatePresence>
-          </>
+          </div>
         )}
         <div ref={messagesEndRef} />
       </div>
@@ -899,6 +882,41 @@ const EnhancedMessageThread = ({
           SUPPORTED FILES: PDF, JPG, PNG, TXT, DOC, DOCX, XLSX, PPT (MAX 10MB EACH)
         </p>
       </div>
+
+      {/* Image Preview Modal */}
+      {showImagePreview && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setShowImagePreview(false)}>
+          <div className="relative max-w-4xl max-h-[90vh] bg-white rounded-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-gray-200 bg-white flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-900">{previewImageName}</h3>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => handleFileDownload(previewImageUrl, previewImageName)}
+                  className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  title="Download image"
+                >
+                  <Download size={18} />
+                </button>
+                <button
+                  onClick={() => setShowImagePreview(false)}
+                  className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  title="Close preview"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+            <div className="p-6 max-h-[80vh] overflow-auto">
+              <img 
+                src={previewImageUrl} 
+                alt={previewImageName}
+                className="w-full h-auto max-w-full"
+                style={{ maxHeight: '70vh' }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Escalation Modal */}
       {showEscalationModal && (

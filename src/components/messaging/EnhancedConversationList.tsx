@@ -203,9 +203,17 @@ const EnhancedConversationList = ({
                      </div>
                      
                      {/* Message Preview */}
-                      <p className="text-sm text-gray-600 truncate font-medium">
-                        {conversation.lastMessage || 'No messages yet'}
-                      </p>
+                     <div className="space-y-1">
+                       <p className="text-sm text-gray-600 truncate font-medium">
+                         {conversation.lastMessage || 'No messages yet'}
+                       </p>
+                       {conversation.lastMessage && (
+                         <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded border">
+                           <p className="font-medium uppercase tracking-wide mb-1">CONVERSATION PREVIEW:</p>
+                           <p className="line-clamp-2">{conversation.lastMessage}</p>
+                         </div>
+                       )}
+                     </div>
                     </div>
                   </div>
                 </motion.button>
