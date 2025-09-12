@@ -459,6 +459,7 @@ const AdminDashboard = () => {
             
             <div className="bg-gray-900 rounded-lg overflow-hidden">
               <TradingViewTickerTape 
+                key="admin-dashboard-ticker"
                 symbols={[
                   {
                     "proName": "FX_IDC:EURUSD",

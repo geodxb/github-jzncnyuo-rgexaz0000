@@ -18,8 +18,23 @@ import {
   CheckCircle,
   Clock,
   User,
-  MessageSquare
+  MessageSquare,
+  Paperclip,
+  Download,
+  FileText,
+  Image,
+  File,
+  X
 } from 'lucide-react';
+
+// Interface for uploaded documents
+interface UploadedDocument {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url: string;
+}
 
 interface EnhancedMessageThreadProps {
   conversationId: string;
@@ -44,6 +59,10 @@ const EnhancedMessageThread = ({
   const [replyingTo, setReplyingTo] = useState<EnhancedMessage | null>(null);
   const [showEscalationModal, setShowEscalationModal] = useState(false);
   const [escalationReason, setEscalationReason] = useState('');
+  const [attachedDocuments, setAttachedDocuments] = useState<UploadedDocument[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Merge and sort messages from both collections
@@ -101,8 +120,105 @@ const EnhancedMessageThread = ({
     }
   }, [allMessages]);
 
+  // Helper function to get file icon based on file type
+  const getFileIcon = (fileType: string) => {
+    if (fileType.includes('pdf')) {
+      return <FileText size={16} className="text-red-600" />;
+    } else if (fileType.includes('image')) {
+      return <Image size={16} className="text-blue-600" />;
+    } else if (fileType.includes('document') || fileType.includes('word')) {
+      return <FileText size={16} className="text-blue-800" />;
+    } else if (fileType.includes('sheet') || fileType.includes('excel')) {
+      return <FileText size={16} className="text-green-600" />;
+    } else if (fileType.includes('presentation') || fileType.includes('powerpoint')) {
+      return <FileText size={16} className="text-orange-600" />;
+    } else {
+      return <File size={16} className="text-gray-600" />;
+    }
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      const newDocuments: UploadedDocument[] = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Validate file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+          setUploadError(`File "${file.name}" is too large. Maximum size is 10MB.`);
+          continue;
+        }
+
+        // Validate file type
+        const allowedTypes = [
+          'application/pdf',
+          'image/jpeg',
+          'image/jpg',
+          'image/png',
+          'text/plain',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.ms-excel',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'application/vnd.ms-powerpoint',
+          'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+          setUploadError(`File type "${file.type}" is not supported.`);
+          continue;
+        }
+
+        // Create a temporary URL for the file (in a real app, you'd upload to a storage service)
+        const fileUrl = URL.createObjectURL(file);
+        
+        const document: UploadedDocument = {
+          id: `${Date.now()}-${i}`,
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          url: fileUrl
+        };
+
+        newDocuments.push(document);
+      }
+
+      setAttachedDocuments(prev => [...prev, ...newDocuments]);
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      setUploadError('Failed to upload files. Please try again.');
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (event.target) {
+        event.target.value = '';
+      }
+    }
+  };
+
+  // Remove document from attached list
+  const removeDocument = (documentId: string) => {
+    setAttachedDocuments(prev => {
+      const updated = prev.filter(doc => doc.id !== documentId);
+      // Clean up object URL to prevent memory leaks
+      const removedDoc = prev.find(doc => doc.id === documentId);
+      if (removedDoc) {
+        URL.revokeObjectURL(removedDoc.url);
+      }
+      return updated;
+    });
+  };
+
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !user || isLoading) return;
+    if ((!newMessage.trim() && attachedDocuments.length === 0) || !user || isLoading) return;
 
     setIsLoading(true);
     
@@ -112,12 +228,16 @@ const EnhancedMessageThread = ({
         userId: user.id,
         userName: user.name,
         userRole: user.role,
-        messageLength: newMessage.trim().length
+        messageLength: newMessage.trim().length,
+        attachmentCount: attachedDocuments.length
       });
 
       // Determine user role for message service
       const messageRole = user.role === 'admin' ? 'admin' : 
                          user.role === 'governor' ? 'governor' : 'affiliate';
+
+      // Prepare attachments for sending
+      const attachmentUrls = attachedDocuments.map(doc => doc.url);
 
       // Try enhanced message service first
       try {
@@ -129,7 +249,11 @@ const EnhancedMessageThread = ({
           newMessage.trim(),
           'medium',
           conversation?.department,
-          replyingTo?.id
+          replyingTo?.id,
+          false,
+          undefined,
+          'text',
+          attachmentUrls
         );
         console.log('✅ Enhanced message sent successfully:', messageId);
       } catch (enhancedError) {
@@ -144,13 +268,15 @@ const EnhancedMessageThread = ({
           conversationId,
           replyingTo?.id,
           'medium',
-          conversation?.department
+          conversation?.department,
+          attachmentUrls
         );
         console.log('✅ Regular message sent successfully:', messageId);
       }
       
       setNewMessage('');
       setReplyingTo(null);
+      setAttachedDocuments([]);
       console.log('✅ Message form reset');
     } catch (error) {
       console.error('Error sending enhanced message:', error);
