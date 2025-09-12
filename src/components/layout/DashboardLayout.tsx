@@ -128,18 +128,18 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
       {/* Top Navigation Bar */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="px-4 py-2">
-          <div className="flex items-center justify-between min-h-[48px]">
+          <div className="flex items-center justify-between min-h-[48px] lg:min-h-[48px]">
             {/* Logo and Brand */}
-            <div className="flex items-center space-x-4 flex-shrink-0">
+            <div className="flex items-center space-x-2 lg:space-x-4 flex-shrink-0">
               <img 
                 src="/Screenshot 2025-06-07 024813.png" 
                 alt="Interactive Brokers" 
-                className="h-6 w-auto object-contain"
+                className="h-5 lg:h-6 w-auto object-contain"
                 style={{ filter: 'none', boxShadow: 'none' }}
               />
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <span className="font-medium whitespace-nowrap">PortfolioAnalyst</span>
-                <span className="px-2 py-1 bg-gray-800 text-white text-xs rounded font-medium whitespace-nowrap">MARKETS</span>
+              <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-600">
+                <span className="font-medium whitespace-nowrap text-xs lg:text-sm">PortfolioAnalyst</span>
+                <span className="px-1 lg:px-2 py-1 bg-gray-800 text-white text-xs rounded font-medium whitespace-nowrap">MARKETS</span>
               </div>
             </div>
 
@@ -190,18 +190,18 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
             </div>
 
             {/* Right Side - User Menu */}
-           <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
+           <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-4 flex-shrink-0">
               {/* Notification Bell */}
               <NotificationBell />
               
               {/* Language Toggle */}
-             <div className="hidden sm:block">
+             <div className="hidden md:block">
                <LanguageToggle />
              </div>
               
               {/* Support Chat Button - Only show for admin users */}
               {user?.role === 'admin' && (
-               <div className="hidden md:block">
+               <div className="hidden lg:block">
                  <button
                    onClick={() => setSupportChatOpen(true)}
                    className="flex items-center space-x-2 text-sm text-gray-600 hover:text-blue-600 transition-colors whitespace-nowrap"
@@ -215,10 +215,10 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
               {/* User Menu */}
               <button
                 onClick={handleLogout}
-               className="flex items-center space-x-1 md:space-x-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+               className="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-800 transition-colors"
               >
                 <User size={16} />
-               <span className="hidden sm:inline font-medium truncate max-w-20 md:max-w-none">{user?.name}</span>
+               <span className="hidden sm:inline font-medium text-xs lg:text-sm truncate max-w-16 lg:max-w-none">{user?.name}</span>
               </button>
 
               {/* Mobile Menu Button */}
@@ -347,9 +347,45 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
         )}
       </AnimatePresence>
 
+      {/* Mobile Bottom Navigation - Only show on mobile */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-40">
+        <div className="flex items-center justify-around py-2">
+          {navItems.slice(0, 4).map((item, index) => (
+            <button
+              key={index}
+              onClick={() => handleNavigation(item.path)}
+              className={`flex flex-col items-center space-y-1 px-2 py-2 text-xs transition-colors ${
+                isActivePath(item.path)
+                  ? 'text-blue-600'
+                  : 'text-gray-600'
+              }`}
+            >
+              {/* Icons for each nav item */}
+              {item.text === 'Dashboard' && <Users size={16} />}
+              {item.text === 'Messages' && <MessageSquare size={16} />}
+              {item.text === 'Holdings' && <DollarSign size={16} />}
+              {item.text === 'Reports' && <Users size={16} />}
+              {item.text === 'Planning' && <DollarSign size={16} />}
+              {item.text === 'Profile' && <User size={16} />}
+              <span className="font-medium truncate max-w-12">{item.text}</span>
+            </button>
+          ))}
+          
+          {/* More button for additional items */}
+          {navItems.length > 4 && (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="flex flex-col items-center space-y-1 px-2 py-2 text-xs text-gray-600"
+            >
+              <Menu size={16} />
+              <span className="font-medium">More</span>
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Main Content */}
-      <div className="bg-gray-50 min-h-screen flex flex-col">
+      <div className="bg-gray-50 min-h-screen flex flex-col pb-16 lg:pb-0">
         {/* Announcement Banners */}
         {announcements.length > 0 && (
           <div className="p-6 pb-0">
