@@ -559,13 +559,27 @@ const EnhancedMessageThread = ({
                           ATTACHMENTS ({message.attachments.length}):
                         </p>
                         {message.attachments.map((attachment, index) => {
-                          const attachmentData = typeof attachment === 'string' 
-                            ? { url: attachment, name: `Attachment ${index + 1}`, type: 'unknown', size: 0 }
-                            : attachment;
+                          // Handle both string URLs and attachment objects
+                          let attachmentData;
+                          if (typeof attachment === 'string') {
+                            // Detect file type from URL or extension
+                            const isImageUrl = attachment.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) || 
+                                             attachment.startsWith('data:image/') ||
+                                             attachment.includes('image');
+                            attachmentData = { 
+                              url: attachment, 
+                              name: `Attachment ${index + 1}`, 
+                              type: isImageUrl ? 'image/jpeg' : 'unknown', 
+                              size: 0 
+                            };
+                          } else {
+                            attachmentData = attachment;
+                          }
                           
                           const isImage = attachmentData.type?.includes('image') || 
                                         attachmentData.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) ||
-                                        attachmentData.url?.startsWith('data:image/');
+                                        attachmentData.url?.startsWith('data:image/') ||
+                                        attachmentData.url?.includes('image');
                           
                           const isPDF = attachmentData.type?.includes('pdf') || 
                                       attachmentData.name?.toLowerCase().endsWith('.pdf');
@@ -601,23 +615,24 @@ const EnhancedMessageThread = ({
                                       </button>
                                     </div>
                                   </div>
-                                  {/* INLINE IMAGE DISPLAY */}
-                                  <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 cursor-pointer"
+                                  {/* INLINE IMAGE DISPLAY - IMPROVED */}
+                                  <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 cursor-pointer max-w-sm"
                                        onClick={() => handleImagePreview(attachmentData.url, attachmentData.name)}>
                                     <img 
                                       src={attachmentData.url} 
                                       alt={attachmentData.name}
-                                      className="w-full h-auto max-h-64 object-contain"
+                                      className="w-full h-auto max-h-48 object-cover hover:scale-105 transition-transform duration-200"
                                       onError={(e) => {
                                         const target = e.target as HTMLImageElement;
-                                        target.style.display = 'none';
-                                        if (target.parentElement) {
-                                          target.parentElement.innerHTML = `
+                                        // Hide broken image and show fallback
+                                        const parent = target.parentElement;
+                                        if (parent) {
+                                          parent.innerHTML = `
                                             <div class="p-4 text-center text-gray-500 bg-gray-100 border border-gray-300 rounded">
                                               <div class="flex items-center justify-center mb-2">
-                                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                                </svg>
+                                                <div class="w-8 h-8 bg-gray-300 rounded flex items-center justify-center">
+                                                  <span class="text-gray-600 text-xs">IMG</span>
+                                                </div>
                                               </div>
                                               <p class="text-sm font-medium text-gray-700">Image could not be displayed</p>
                                               <p class="text-xs text-gray-500 mt-1">${attachmentData.name}</p>
@@ -629,6 +644,7 @@ const EnhancedMessageThread = ({
                                   </div>
                                 </div>
                               ) : (
+                                {/* NON-IMAGE ATTACHMENTS */}
                                 <div className="flex items-center justify-between bg-gray-50 p-3 rounded border">
                                   <div className="flex items-center space-x-2">
                                     {getFileIcon(attachmentData.type)}
