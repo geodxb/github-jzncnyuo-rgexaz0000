@@ -190,31 +190,35 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
             </div>
 
             {/* Right Side - User Menu */}
-            <div className="flex items-center space-x-4 flex-shrink-0">
+           <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
               {/* Notification Bell */}
               <NotificationBell />
               
               {/* Language Toggle */}
-              <LanguageToggle />
+             <div className="hidden sm:block">
+               <LanguageToggle />
+             </div>
               
               {/* Support Chat Button - Only show for admin users */}
               {user?.role === 'admin' && (
-                <button
-                  onClick={() => setSupportChatOpen(true)}
-                  className="flex items-center space-x-2 text-sm text-gray-600 hover:text-blue-600 transition-colors whitespace-nowrap"
-                >
-                  <MessageCircle size={16} />
-                  <span className="hidden md:inline font-medium">{t('nav.support')}</span>
-                </button>
+               <div className="hidden md:block">
+                 <button
+                   onClick={() => setSupportChatOpen(true)}
+                   className="flex items-center space-x-2 text-sm text-gray-600 hover:text-blue-600 transition-colors whitespace-nowrap"
+                 >
+                   <MessageCircle size={16} />
+                   <span className="hidden lg:inline font-medium">{t('nav.support')}</span>
+                 </button>
+               </div>
               )}
 
               {/* User Menu */}
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800 transition-colors whitespace-nowrap"
+               className="flex items-center space-x-1 md:space-x-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
               >
                 <User size={16} />
-                <span className="hidden md:inline font-medium">{user?.name}</span>
+               <span className="hidden sm:inline font-medium truncate max-w-20 md:max-w-none">{user?.name}</span>
               </button>
 
               {/* Mobile Menu Button */}
