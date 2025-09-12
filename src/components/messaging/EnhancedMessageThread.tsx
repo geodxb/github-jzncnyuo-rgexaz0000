@@ -568,6 +568,87 @@ const EnhancedMessageThread = ({
                           ? { url: attachment, name: `Attachment ${index + 1}`, type: 'unknown', size: 0 }
                           : attachment;
                         
+                       // Check if it's an image
+                       const isImage = attachmentData.type?.includes('image') || 
+                                     attachmentData.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/);
+                       
+                       if (isImage) {
+                         // Display image inline within the message
+                         return (
+                           <div key={index} className="mt-3">
+                             <div className="flex items-center justify-between mb-2">
+                               <div className="flex items-center space-x-2">
+                                 <Image size={16} className="text-blue-600" />
+                                 <span className="text-sm font-medium text-gray-900">{attachmentData.name}</span>
+                                 <span className="text-xs text-gray-500">
+                                   {attachmentData.size ? (attachmentData.size / 1024 / 1024).toFixed(2) + ' MB' : ''}
+                                 </span>
+                               </div>
+                               <button
+                                 onClick={() => {
+                                   // Download image
+                                   const url = attachmentData.url;
+                                   const fileName = attachmentData.name || `image_${index + 1}.png`;
+                                   
+                                   if (url.startsWith('data:')) {
+                                     const byteCharacters = atob(url.split(',')[1]);
+                                     const byteNumbers = new Array(byteCharacters.length);
+                                     for (let i = 0; i < byteCharacters.length; i++) {
+                                       byteNumbers[i] = byteCharacters.charCodeAt(i);
+                                     }
+                                     const byteArray = new Uint8Array(byteNumbers);
+                                     const blob = new Blob([byteArray], { type: attachmentData.type });
+                                     const blobUrl = URL.createObjectURL(blob);
+                                     
+                                     const link = document.createElement('a');
+                                     link.href = blobUrl;
+                                     link.download = fileName;
+                                     document.body.appendChild(link);
+                                     link.click();
+                                     document.body.removeChild(link);
+                                     URL.revokeObjectURL(blobUrl);
+                                   } else {
+                                     const link = document.createElement('a');
+                                     link.href = url;
+                                     link.download = fileName;
+                                     document.body.appendChild(link);
+                                     link.click();
+                                     document.body.removeChild(link);
+                                   }
+                                 }}
+                                 className="p-1 text-gray-600 hover:text-gray-800"
+                                 title="Download image"
+                               >
+                                 <Download size={14} />
+                               </button>
+                             </div>
+                             {/* Inline image display */}
+                             <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                               <img 
+                                 src={attachmentData.url} 
+                                 alt={attachmentData.name}
+                                 className="max-w-full h-auto max-h-96 object-contain mx-auto block"
+                                 style={{ maxWidth: '100%', height: 'auto' }}
+                                 onError={(e) => {
+                                   // Fallback if image fails to load
+                                   const target = e.target as HTMLImageElement;
+                                   target.style.display = 'none';
+                                   const parent = target.parentElement;
+                                   if (parent) {
+                                     parent.innerHTML = `
+                                       <div class="p-4 text-center text-gray-500">
+                                         <p class="text-sm">Image could not be displayed</p>
+                                         <p class="text-xs">${attachmentData.name}</p>
+                                       </div>
+                                     `;
+                                   }
+                                 }}
+                               />
+                             </div>
+                           </div>
+                         );
+                       } else {
+                         // Display non-image files as downloadable attachments
                         return (
                         <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded border">
                           <div className="flex items-center space-x-2">
@@ -580,12 +661,14 @@ const EnhancedMessageThread = ({
                             </div>
                           </div>
                           <div className="flex items-center space-x-1">
+                            {/* Only show view button for PDFs and documents */}
+                            {(attachmentData.type?.includes('pdf') || 
+                              attachmentData.type?.includes('document') || 
+                              attachmentData.type?.includes('text')) && (
                             <button
                               onClick={() => {
-                                // Handle base64 data URLs and regular URLs
                                 const url = attachmentData.url;
                                 if (url.startsWith('data:')) {
-                                  // For base64 data, create a blob and open it
                                   const byteCharacters = atob(url.split(',')[1]);
                                   const byteNumbers = new Array(byteCharacters.length);
                                   for (let i = 0; i < byteCharacters.length; i++) {
@@ -604,14 +687,13 @@ const EnhancedMessageThread = ({
                             >
                               <Eye size={14} />
                             </button>
+                            )}
                             <button
                               onClick={() => {
-                                // Handle base64 data URLs and regular URLs for download
                                 const url = attachmentData.url;
                                 const fileName = attachmentData.name || `attachment_${index + 1}`;
                                 
                                 if (url.startsWith('data:')) {
-                                  // For base64 data, create a blob and download it
                                   const byteCharacters = atob(url.split(',')[1]);
                                   const byteNumbers = new Array(byteCharacters.length);
                                   for (let i = 0; i < byteCharacters.length; i++) {
@@ -645,6 +727,7 @@ const EnhancedMessageThread = ({
                           </div>
                         </div>
                         );
+                       }
                       })}
                     </div>
                   )}

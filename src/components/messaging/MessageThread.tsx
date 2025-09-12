@@ -309,88 +309,87 @@ const MessageThread = ({ conversationId, recipientName }: MessageThreadProps) =>
                         ATTACHMENTS ({message.attachments.length}):
                       </p>
                       {message.attachments.map((attachment, index) => {
-                                                // Handle both string URLs and attachment objects
+                        // Handle both string URLs and attachment objects
                         const attachmentData = typeof attachment === 'string' 
                           ? { url: attachment, name: `Attachment ${index + 1}`, type: 'unknown', size: 0 }
                           : attachment;
                         
                         return (
-                        <div key={attachment.id} className="flex items-center justify-between bg-gray-50 p-2 rounded border">
-                          <div className="flex items-center space-x-2">
-                            {getFileIcon(attachmentData.type || 'unknown')}
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">{attachmentData.name}</p>
-                              <p className="text-xs text-gray-500">
-                                {attachmentData.size ? (attachmentData.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown size'}
-                              </p>
+                          <div key={attachment.id} className="flex items-center justify-between bg-gray-50 p-2 rounded border">
+                            <div className="flex items-center space-x-2">
+                              {getFileIcon(attachmentData.type || 'unknown')}
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">{attachmentData.name}</p>
+                                <p className="text-xs text-gray-500">
+                                  {attachmentData.size ? (attachmentData.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown size'}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <button
+                                onClick={() => {
+                                  // Handle base64 data URLs and regular URLs
+                                  const url = attachmentData.url;
+                                  if (url.startsWith('data:')) {
+                                    // For base64 data, create a blob and open it
+                                    const byteCharacters = atob(url.split(',')[1]);
+                                    const byteNumbers = new Array(byteCharacters.length);
+                                    for (let i = 0; i < byteCharacters.length; i++) {
+                                      byteNumbers[i] = byteCharacters.charCodeAt(i);
+                                    }
+                                    const byteArray = new Uint8Array(byteNumbers);
+                                    const blob = new Blob([byteArray], { type: attachmentData.type });
+                                    const blobUrl = URL.createObjectURL(blob);
+                                    window.open(blobUrl, '_blank');
+                                  } else {
+                                    window.open(url, '_blank');
+                                  }
+                                }}
+                                className="p-1 text-gray-600 hover:text-gray-800"
+                                title="View document"
+                              >
+                                <Eye size={14} />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  // Handle base64 data URLs and regular URLs for download
+                                  const url = attachmentData.url;
+                                  const fileName = attachmentData.name || `attachment_${index + 1}`;
+                                  
+                                  if (url.startsWith('data:')) {
+                                    // For base64 data, create a blob and download it
+                                    const byteCharacters = atob(url.split(',')[1]);
+                                    const byteNumbers = new Array(byteCharacters.length);
+                                    for (let i = 0; i < byteCharacters.length; i++) {
+                                      byteNumbers[i] = byteCharacters.charCodeAt(i);
+                                    }
+                                    const byteArray = new Uint8Array(byteNumbers);
+                                    const blob = new Blob([byteArray], { type: attachmentData.type });
+                                    const blobUrl = URL.createObjectURL(blob);
+                                    
+                                    const link = document.createElement('a');
+                                    link.href = blobUrl;
+                                    link.download = fileName;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    URL.revokeObjectURL(blobUrl);
+                                  } else {
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = fileName;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                  }
+                                }}
+                                className="p-1 text-gray-600 hover:text-gray-800"
+                                title="Download document"
+                              >
+                                <Download size={14} />
+                              </button>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-1">
-                            <button
-                              onClick={() => {
-                                // Handle base64 data URLs and regular URLs
-                                const url = attachmentData.url;
-                                if (url.startsWith('data:')) {
-                                  // For base64 data, create a blob and open it
-                                  const byteCharacters = atob(url.split(',')[1]);
-                                  const byteNumbers = new Array(byteCharacters.length);
-                                  for (let i = 0; i < byteCharacters.length; i++) {
-                                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-                                  }
-                                  const byteArray = new Uint8Array(byteNumbers);
-                                  const blob = new Blob([byteArray], { type: attachmentData.type });
-                                  const blobUrl = URL.createObjectURL(blob);
-                                  window.open(blobUrl, '_blank');
-                                } else {
-                                  window.open(url, '_blank');
-                                }
-                              }}
-                              className="p-1 text-gray-600 hover:text-gray-800"
-                              title="View document"
-                            >
-                              <Eye size={14} />
-                            </button>
-                            <button
-                              onClick={() => {
-                                // Handle base64 data URLs and regular URLs for download
-                                const url = attachmentData.url;
-                                const fileName = attachmentData.name || `attachment_${index + 1}`;
-                                
-                                if (url.startsWith('data:')) {
-                                  // For base64 data, create a blob and download it
-                                  const byteCharacters = atob(url.split(',')[1]);
-                                  const byteNumbers = new Array(byteCharacters.length);
-                                  for (let i = 0; i < byteCharacters.length; i++) {
-                                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-                                  }
-                                  const byteArray = new Uint8Array(byteNumbers);
-                                  const blob = new Blob([byteArray], { type: attachmentData.type });
-                                  const blobUrl = URL.createObjectURL(blob);
-                                  
-                                  const link = document.createElement('a');
-                                  link.href = blobUrl;
-                                  link.download = fileName;
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
-                                  URL.revokeObjectURL(blobUrl);
-                                } else {
-                                  const link = document.createElement('a');
-                                  link.href = url;
-                                  link.download = fileName;
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
-                                }
-                              }}
-                              }}
-                              className="p-1 text-gray-600 hover:text-gray-800"
-                              title="Download document"
-                            >
-                              <Download size={14} />
-                            </button>
-                          </div>
-                        </div>
                         );
                       })}
                     </div>
