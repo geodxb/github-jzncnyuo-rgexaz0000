@@ -214,9 +214,8 @@ const EnhancedMessageThread = ({
   const removeDocument = (documentId: string) => {
     setAttachedDocuments(prev => {
       const updated = prev.filter(doc => doc.id !== documentId);
-      // Only revoke object URLs, not base64 data URLs
       const removedDoc = prev.find(doc => doc.id === documentId);
-      if (removedDoc && removedDoc.url.startsWith('blob:')) {
+      if (removedDoc) {
         URL.revokeObjectURL(removedDoc.url);
       }
       return updated;
@@ -280,7 +279,7 @@ const EnhancedMessageThread = ({
           newMessage.trim(),
           conversationId,
           replyingTo?.id,
-          'priority',
+          'medium',
           conversation?.department,
           attachmentUrls
         );
