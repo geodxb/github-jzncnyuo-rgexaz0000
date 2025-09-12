@@ -177,15 +177,20 @@ const EnhancedMessageThread = ({
           continue;
         }
 
-        // Create a temporary URL for the file (in a real app, you'd upload to a storage service)
-        const fileUrl = URL.createObjectURL(file);
+        // Convert file to base64 for storage and viewing
+        const base64Data = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
         
         const document: UploadedDocument = {
           id: `${Date.now()}-${i}`,
           name: file.name,
           size: file.size,
           type: file.type,
-          url: fileUrl
+          url: base64Data
         };
 
         newDocuments.push(document);
@@ -208,11 +213,6 @@ const EnhancedMessageThread = ({
   const removeDocument = (documentId: string) => {
     setAttachedDocuments(prev => {
       const updated = prev.filter(doc => doc.id !== documentId);
-      // Clean up object URL to prevent memory leaks
-      const removedDoc = prev.find(doc => doc.id === documentId);
-      if (removedDoc) {
-        URL.revokeObjectURL(removedDoc.url);
-      }
       return updated;
     });
   };
@@ -562,20 +562,43 @@ const EnhancedMessageThread = ({
                       <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">
                         ATTACHMENTS ({message.attachments.length}):
                       </p>
-                      {message.attachments.map((attachment, index) => (
+                      {message.attachments.map((attachment, index) => {
+                        // Handle both string URLs and attachment objects
+                        const attachmentData = typeof attachment === 'string' 
+                          ? { url: attachment, name: `Attachment ${index + 1}`, type: 'unknown', size: 0 }
+                          : attachment;
+                        
+                        return (
                         <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded border">
                           <div className="flex items-center space-x-2">
-                            {getFileIcon(attachment.type || 'unknown')}
+                            {getFileIcon(attachmentData.type || 'unknown')}
                             <div>
-                              <p className="text-sm font-medium text-gray-900">{attachment.name || `Attachment ${index + 1}`}</p>
+                              <p className="text-sm font-medium text-gray-900">{attachmentData.name}</p>
                               <p className="text-xs text-gray-500">
-                                {attachment.size ? (attachment.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown size'}
+                                {attachmentData.size ? (attachmentData.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown size'}
                               </p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-1">
                             <button
-                              onClick={() => window.open(attachment.url || attachment, '_blank')}
+                              onClick={() => {
+                                // Handle base64 data URLs and regular URLs
+                                const url = attachmentData.url;
+                                if (url.startsWith('data:')) {
+                                  // For base64 data, create a blob and open it
+                                  const byteCharacters = atob(url.split(',')[1]);
+                                  const byteNumbers = new Array(byteCharacters.length);
+                                  for (let i = 0; i < byteCharacters.length; i++) {
+                                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                                  }
+                                  const byteArray = new Uint8Array(byteNumbers);
+                                  const blob = new Blob([byteArray], { type: attachmentData.type });
+                                  const blobUrl = URL.createObjectURL(blob);
+                                  window.open(blobUrl, '_blank');
+                                } else {
+                                  window.open(url, '_blank');
+                                }
+                              }}
                               className="p-1 text-gray-600 hover:text-gray-800"
                               title="View document"
                             >
@@ -583,10 +606,36 @@ const EnhancedMessageThread = ({
                             </button>
                             <button
                               onClick={() => {
-                                const link = document.createElement('a');
-                                link.href = attachment.url || attachment;
-                                link.download = attachment.name || `attachment_${index + 1}`;
-                                link.click();
+                                // Handle base64 data URLs and regular URLs for download
+                                const url = attachmentData.url;
+                                const fileName = attachmentData.name || `attachment_${index + 1}`;
+                                
+                                if (url.startsWith('data:')) {
+                                  // For base64 data, create a blob and download it
+                                  const byteCharacters = atob(url.split(',')[1]);
+                                  const byteNumbers = new Array(byteCharacters.length);
+                                  for (let i = 0; i < byteCharacters.length; i++) {
+                                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                                  }
+                                  const byteArray = new Uint8Array(byteNumbers);
+                                  const blob = new Blob([byteArray], { type: attachmentData.type });
+                                  const blobUrl = URL.createObjectURL(blob);
+                                  
+                                  const link = document.createElement('a');
+                                  link.href = blobUrl;
+                                  link.download = fileName;
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                  URL.revokeObjectURL(blobUrl);
+                                } else {
+                                  const link = document.createElement('a');
+                                  link.href = url;
+                                  link.download = fileName;
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                }
                               }}
                               className="p-1 text-gray-600 hover:text-gray-800"
                               title="Download document"
@@ -595,7 +644,8 @@ const EnhancedMessageThread = ({
                             </button>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                   
