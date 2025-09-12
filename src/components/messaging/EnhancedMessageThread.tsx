@@ -279,7 +279,7 @@ const EnhancedMessageThread = ({
           newMessage.trim(),
           conversationId,
           replyingTo?.id,
-          'medium',
+          'priority',
           conversation?.department,
           attachmentUrls
         );
@@ -576,25 +576,24 @@ const EnhancedMessageThread = ({
                           // Handle both string URLs and attachment objects
                           let attachmentData;
                           if (typeof attachment === 'string') {
-                            // Enhanced image detection for URLs and base64
+                            // Detect file type from URL or extension
                             const isImageUrl = attachment.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) || 
                                              attachment.startsWith('data:image/') ||
-                                             attachment.includes('image') ||
-                                             attachment.includes('blob:') && attachment.includes('image');
+                                             attachment.includes('image');
                             attachmentData = { 
                               url: attachment, 
                               name: `Attachment ${index + 1}`, 
-                              type: isImageUrl ? 'image/jpeg' : 'application/octet-stream', 
+                              type: isImageUrl ? 'image/jpeg' : 'unknown', 
                               size: 0 
                             };
                           } else {
                             attachmentData = attachment;
                           }
                           
-                          // Enhanced image detection
-                          const isImage = attachmentData.type?.startsWith('image/') || 
+                          const isImage = attachmentData.type?.includes('image') || 
                                         attachmentData.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) ||
-                                        attachmentData.url?.startsWith('data:image/');
+                                        attachmentData.url?.startsWith('data:image/') ||
+                                        attachmentData.url?.includes('image');
                           
                           const isPDF = attachmentData.type?.includes('pdf') || 
                                       attachmentData.name?.toLowerCase().endsWith('.pdf');
@@ -632,26 +631,25 @@ const EnhancedMessageThread = ({
                                       </div>
                                     </div>
                                     {/* INLINE IMAGE DISPLAY - IMPROVED */}
-                                    <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 cursor-pointer max-w-xs mt-2"
+                                    <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 cursor-pointer max-w-sm"
                                          onClick={() => handleImagePreview(attachmentData.url, attachmentData.name)}>
                                       <img 
                                         src={attachmentData.url} 
                                         alt={attachmentData.name}
-                                        className="w-full h-auto max-h-32 object-cover hover:scale-105 transition-transform duration-200"
-                                        loading="lazy"
+                                        className="w-full h-auto max-h-48 object-cover hover:scale-105 transition-transform duration-200"
                                         onError={(e) => {
                                           const target = e.target as HTMLImageElement;
                                           // Hide broken image and show fallback
                                           const parent = target.parentElement;
                                           if (parent) {
                                             parent.innerHTML = `
-                                              <div class="p-3 text-center text-gray-500 bg-gray-100 border border-gray-300 rounded">
+                                              <div class="p-4 text-center text-gray-500 bg-gray-100 border border-gray-300 rounded">
                                                 <div class="flex items-center justify-center mb-2">
-                                                  <div class="w-6 h-6 bg-gray-300 rounded flex items-center justify-center">
+                                                  <div class="w-8 h-8 bg-gray-300 rounded flex items-center justify-center">
                                                     <span class="text-gray-600 text-xs">IMG</span>
                                                   </div>
                                                 </div>
-                                                <p class="text-xs font-medium text-gray-700">Image could not be displayed</p>
+                                                <p class="text-sm font-medium text-gray-700">Image could not be displayed</p>
                                                 <p class="text-xs text-gray-500 mt-1">${attachmentData.name}</p>
                                               </div>
                                             `;
