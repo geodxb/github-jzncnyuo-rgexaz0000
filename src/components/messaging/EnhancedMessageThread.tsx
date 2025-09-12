@@ -550,20 +550,19 @@ const EnhancedMessageThread = ({
                           return (
                             <div key={index} className="mt-3">
                               {isImage ? (
-                                <>
+                                <div>
                                   <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center space-x-2">
-                                      <span className="text-sm font-medium text-gray-900">{attachmentData.name}</span>
-                                    </div>
+                                    <span className="text-sm font-medium text-gray-900">{attachmentData.name}</span>
                                     <button
                                       onClick={() => {
-                                        const link = document.createElement('a');
-                                        link.href = attachmentData.url;
-                                        link.download = attachmentData.name || `image_${index + 1}.png`;
-                                        link.click();
+                                        const a = document.createElement('a');
+                                        a.href = attachmentData.url;
+                                        a.download = attachmentData.name || 'image.png';
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        document.body.removeChild(a);
                                       }}
                                       className="p-1 text-gray-600 hover:text-gray-800"
-                                      title="Download image"
                                     >
                                       <Download size={14} />
                                     </button>
@@ -571,16 +570,13 @@ const EnhancedMessageThread = ({
                                   <img 
                                     src={attachmentData.url} 
                                     alt={attachmentData.name}
-                                    className="w-full h-auto max-h-80 object-contain rounded-lg border border-gray-200"
-                                    onError={(e) => {
-                                      console.error('Failed to load image:', attachmentData.name);
-                                    }}
+                                    className="w-full h-auto max-h-80 object-contain rounded border"
                                   />
-                                </>
+                                </div>
                               ) : (
                                 <div className="flex items-center justify-between bg-gray-50 p-2 rounded border">
                                   <div className="flex items-center space-x-2">
-                                    {getFileIcon(attachmentData.type || 'unknown')}
+                                    {getFileIcon(attachmentData.type)}
                                     <div>
                                       <p className="text-sm font-medium text-gray-900">{attachmentData.name}</p>
                                       <p className="text-xs text-gray-500">
@@ -590,21 +586,23 @@ const EnhancedMessageThread = ({
                                   </div>
                                   <div className="flex items-center space-x-1">
                                     <button
-                                      onClick={() => window.open(attachmentData.url || attachment, '_blank')}
+                                      onClick={() => {
+                                        window.open(attachmentData.url, '_blank');
+                                      }}
                                       className="p-1 text-gray-600 hover:text-gray-800"
-                                      title="View document"
                                     >
                                       <Eye size={14} />
                                     </button>
                                     <button
                                       onClick={() => {
-                                        const link = document.createElement('a');
-                                        link.href = attachmentData.url || attachment;
-                                        link.download = attachmentData.name || `attachment_${index + 1}`;
-                                        link.click();
+                                        const a = document.createElement('a');
+                                        a.href = attachmentData.url;
+                                        a.download = attachmentData.name || 'file';
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        document.body.removeChild(a);
                                       }}
                                       className="p-1 text-gray-600 hover:text-gray-800"
-                                      title="Download document"
                                     >
                                       <Download size={14} />
                                     </button>
