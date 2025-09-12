@@ -568,9 +568,10 @@ const EnhancedMessageThread = ({
                           ? { url: attachment, name: `Attachment ${index + 1}`, type: 'unknown', size: 0 }
                           : attachment;
                         
-                       // Check if it's an image
-                       const isImage = attachmentData.type?.includes('image') || 
-                                     attachmentData.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/);
+                        // Check if it's an image - improved detection
+                        const isImage = attachmentData.type?.includes('image') || 
+                                      attachmentData.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) ||
+                                      attachmentData.url?.startsWith('data:image/');
                        
                        if (isImage) {
                          // Display image inline within the message
@@ -591,29 +592,36 @@ const EnhancedMessageThread = ({
                                    const fileName = attachmentData.name || `image_${index + 1}.png`;
                                    
                                    if (url.startsWith('data:')) {
-                                     const byteCharacters = atob(url.split(',')[1]);
-                                     const byteNumbers = new Array(byteCharacters.length);
-                                     for (let i = 0; i < byteCharacters.length; i++) {
-                                       byteNumbers[i] = byteCharacters.charCodeAt(i);
-                                     }
-                                     const byteArray = new Uint8Array(byteNumbers);
-                                     const blob = new Blob([byteArray], { type: attachmentData.type });
-                                     const blobUrl = URL.createObjectURL(blob);
-                                     
-                                     const link = document.createElement('a');
-                                     link.href = blobUrl;
-                                     link.download = fileName;
-                                     document.body.appendChild(link);
-                                     link.click();
-                                     document.body.removeChild(link);
-                                     URL.revokeObjectURL(blobUrl);
+                                      try {
+                                        const byteCharacters = atob(url.split(',')[1]);
+                                        const byteNumbers = new Array(byteCharacters.length);
+                                        for (let i = 0; i < byteCharacters.length; i++) {
+                                          byteNumbers[i] = byteCharacters.charCodeAt(i);
+                                        }
+                                        const byteArray = new Uint8Array(byteNumbers);
+                                        const blob = new Blob([byteArray], { type: attachmentData.type || 'image/png' });
+                                        const blobUrl = URL.createObjectURL(blob);
+                                        
+                                        const link = document.createElement('a');
+                                        link.href = blobUrl;
+                                        link.download = fileName;
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                        URL.revokeObjectURL(blobUrl);
+                                      } catch (error) {
+                                        console.error('Error downloading image:', error);
+                                        alert('Failed to download image. Please try again.');
+                                      }
                                    } else {
                                      const link = document.createElement('a');
                                      link.href = url;
                                      link.download = fileName;
                                      document.body.appendChild(link);
                                      link.click();
+                                      document.body.appendChild(link);
                                      document.body.removeChild(link);
+                                      document.body.removeChild(link);
                                    }
                                  }}
                                  className="p-1 text-gray-600 hover:text-gray-800"
@@ -623,25 +631,33 @@ const EnhancedMessageThread = ({
                                </button>
                              </div>
                              {/* Inline image display */}
-                             <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                              <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 max-w-full">
                                <img 
                                  src={attachmentData.url} 
                                  alt={attachmentData.name}
-                                 className="max-w-full h-auto max-h-96 object-contain mx-auto block"
-                                 style={{ maxWidth: '100%', height: 'auto' }}
+                                  className="w-full h-auto max-h-96 object-contain block"
+                                  style={{ maxWidth: '100%', height: 'auto', display: 'block' }}
+                                  loading="lazy"
                                  onError={(e) => {
                                    // Fallback if image fails to load
                                    const target = e.target as HTMLImageElement;
-                                   target.style.display = 'none';
-                                   const parent = target.parentElement;
-                                   if (parent) {
-                                     parent.innerHTML = `
-                                       <div class="p-4 text-center text-gray-500">
-                                         <p class="text-sm">Image could not be displayed</p>
-                                         <p class="text-xs">${attachmentData.name}</p>
-                                       </div>
-                                     `;
-                                   }
+                                    console.error('Failed to load image:', attachmentData.name);
+                                    target.style.display = 'none';
+                                    const parent = target.parentElement;
+                                    if (parent) {
+                                      parent.innerHTML = `
+                                        <div class="p-4 text-center text-gray-500 bg-gray-100 border border-gray-300 rounded">
+                                          <div class="flex items-center justify-center mb-2">
+                                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                            </svg>
+                                          </div>
+                                          <p class="text-sm font-medium text-gray-700">Image could not be displayed</p>
+                                          <p class="text-xs text-gray-500 mt-1">${attachmentData.name}</p>
+                                          <p class="text-xs text-gray-400 mt-1">Click download to save the file</p>
+                                        </div>
+                                      `;
+                                    }
                                  }}
                                />
                              </div>
@@ -656,6 +672,9 @@ const EnhancedMessageThread = ({
                             <div>
                               <p className="text-sm font-medium text-gray-900">{attachmentData.name}</p>
                               <p className="text-xs text-gray-500">
+                                  onLoad={() => {
+                                    console.log('Image loaded successfully:', attachmentData.name);
+                                  }}
                                 {attachmentData.size ? (attachmentData.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown size'}
                               </p>
                             </div>
@@ -669,20 +688,25 @@ const EnhancedMessageThread = ({
                               onClick={() => {
                                 const url = attachmentData.url;
                                 if (url.startsWith('data:')) {
+                                  try {
                                   const byteCharacters = atob(url.split(',')[1]);
                                   const byteNumbers = new Array(byteCharacters.length);
                                   for (let i = 0; i < byteCharacters.length; i++) {
                                     byteNumbers[i] = byteCharacters.charCodeAt(i);
                                   }
                                   const byteArray = new Uint8Array(byteNumbers);
-                                  const blob = new Blob([byteArray], { type: attachmentData.type });
+                                    const blob = new Blob([byteArray], { type: attachmentData.type || 'application/pdf' });
                                   const blobUrl = URL.createObjectURL(blob);
                                   window.open(blobUrl, '_blank');
+                                  } catch (error) {
+                                    console.error('Error opening document:', error);
+                                    alert('Failed to open document. Please try downloading instead.');
+                                  }
                                 } else {
                                   window.open(url, '_blank');
                                 }
                               }}
-                              className="p-1 text-gray-600 hover:text-gray-800"
+                                    const blob = new Blob([byteArray], { type: attachmentData.type || 'application/octet-stream' });
                               title="View document"
                             >
                               <Eye size={14} />
@@ -693,12 +717,17 @@ const EnhancedMessageThread = ({
                                 const url = attachmentData.url;
                                 const fileName = attachmentData.name || `attachment_${index + 1}`;
                                 
+                                try {
                                 if (url.startsWith('data:')) {
                                   const byteCharacters = atob(url.split(',')[1]);
                                   const byteNumbers = new Array(byteCharacters.length);
                                   for (let i = 0; i < byteCharacters.length; i++) {
                                     byteNumbers[i] = byteCharacters.charCodeAt(i);
                                   }
+                                } catch (error) {
+                                  console.error('Error downloading file:', error);
+                                  alert('Failed to download file. Please try again.');
+                                }
                                   const byteArray = new Uint8Array(byteNumbers);
                                   const blob = new Blob([byteArray], { type: attachmentData.type });
                                   const blobUrl = URL.createObjectURL(blob);
