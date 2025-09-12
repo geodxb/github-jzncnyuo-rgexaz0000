@@ -315,6 +315,19 @@ const PinEntryScreen = ({ onAuthenticated }: PinEntryScreenProps) => {
                 zIndex: 2
               }}
             >
+              {/* Static Interactive Brokers Logo Background - positioned relative to terminal container */}
+              <div 
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none"
+                style={{ zIndex: 1 }}
+              >
+                <img 
+                  src="/Screenshot 2025-06-07 024813.png" 
+                  alt="Interactive Brokers" 
+                  className="h-6 sm:h-8 w-auto object-contain"
+                  style={{ opacity: 0.5 }}
+                />
+              </div>
+              
               {/* Terminal content */}
               <div className="relative z-10">
                 {commandHistory.map((line, index) => (
@@ -367,19 +380,6 @@ const PinEntryScreen = ({ onAuthenticated }: PinEntryScreenProps) => {
                     </span>
                   </form>
                 )}
-              </div>
-              
-              {/* Static Interactive Brokers Logo Background - positioned relative to terminal container */}
-              <div 
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none"
-                style={{ zIndex: 1 }}
-              >
-                <img 
-                  src="/Screenshot 2025-06-07 024813.png" 
-                  alt="Interactive Brokers" 
-                  className="h-6 sm:h-8 w-auto object-contain"
-                  style={{ opacity: 0.5 }}
-                />
               </div>
             </div>
           </div>
