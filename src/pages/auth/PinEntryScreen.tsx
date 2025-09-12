@@ -315,9 +315,9 @@ const PinEntryScreen = ({ onAuthenticated }: PinEntryScreenProps) => {
                 zIndex: 2
               }}
             >
-              {/* Static Interactive Brokers Logo Background - positioned relative to terminal container */}
+              {/* Static Interactive Brokers Logo Background - Fixed to terminal viewport */}
               <div 
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none"
+                className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                 style={{ zIndex: 1 }}
               >
                 <img 
