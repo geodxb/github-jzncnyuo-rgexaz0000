@@ -268,7 +268,7 @@ const EnhancedMessageThread = ({
           newMessage.trim(),
           conversationId,
           replyingTo?.id,
-          'medium',
+          'priority',
           conversation?.department,
           attachmentUrls
         );
@@ -552,26 +552,39 @@ const EnhancedMessageThread = ({
                               {isImage ? (
                                 <div>
                                   <div className="flex items-center justify-between mb-2">
-                                    <span className="text-sm font-medium text-gray-900">{attachmentData.name}</span>
+                                    <div className="flex items-center space-x-2">
+                                      <Image size={16} className="text-blue-600" />
+                                      <span className="text-sm font-medium text-gray-900">{attachmentData.name}</span>
+                                    </div>
                                     <button
                                       onClick={() => {
-                                        const a = document.createElement('a');
-                                        a.href = attachmentData.url;
-                                        a.download = attachmentData.name || 'image.png';
-                                        document.body.appendChild(a);
-                                        a.click();
-                                        document.body.removeChild(a);
+                                        const link = document.createElement('a');
+                                        link.href = attachmentData.url;
+                                        link.download = attachmentData.name || 'image.png';
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
                                       }}
                                       className="p-1 text-gray-600 hover:text-gray-800"
+                                      title="Download image"
                                     >
                                       <Download size={14} />
                                     </button>
                                   </div>
-                                  <img 
-                                    src={attachmentData.url} 
-                                    alt={attachmentData.name}
-                                    className="w-full h-auto max-h-80 object-contain rounded border"
-                                  />
+                                  <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                                    <img 
+                                      src={attachmentData.url} 
+                                      alt={attachmentData.name}
+                                      className="w-full h-auto max-h-96 object-contain"
+                                      onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                        if (target.parentElement) {
+                                          target.parentElement.innerHTML = '<div class="p-4 text-center text-gray-500">Image could not be displayed</div>';
+                                        }
+                                      }}
+                                    />
+                                  </div>
                                 </div>
                               ) : (
                                 <div className="flex items-center justify-between bg-gray-50 p-2 rounded border">
@@ -587,22 +600,15 @@ const EnhancedMessageThread = ({
                                   <div className="flex items-center space-x-1">
                                     <button
                                       onClick={() => {
-                                        window.open(attachmentData.url, '_blank');
+                                        const link = document.createElement('a');
+                                        link.href = attachmentData.url;
+                                        link.download = attachmentData.name || 'file';
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
                                       }}
                                       className="p-1 text-gray-600 hover:text-gray-800"
-                                    >
-                                      <Eye size={14} />
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        const a = document.createElement('a');
-                                        a.href = attachmentData.url;
-                                        a.download = attachmentData.name || 'file';
-                                        document.body.appendChild(a);
-                                        a.click();
-                                        document.body.removeChild(a);
-                                      }}
-                                      className="p-1 text-gray-600 hover:text-gray-800"
+                                      title="Download file"
                                     >
                                       <Download size={14} />
                                     </button>
@@ -672,38 +678,12 @@ const EnhancedMessageThread = ({
                                         const url = attachmentData.url;
                                         const fileName = attachmentData.name || `image_${index + 1}.png`;
                                         
-                                        try {
-                                          // Handle base64 data URLs and regular URLs for download
-                                          if (url.startsWith('data:')) {
-                                            // For base64 data, create a blob and download it
-                                            const byteCharacters = atob(url.split(',')[1]);
-                                            const byteNumbers = new Array(byteCharacters.length);
-                                            for (let i = 0; i < byteCharacters.length; i++) {
-                                              byteNumbers[i] = byteCharacters.charCodeAt(i);
-                                            }
-                                            const byteArray = new Uint8Array(byteNumbers);
-                                            const blob = new Blob([byteArray], { type: attachmentData.type || 'application/octet-stream' });
-                                            const blobUrl = URL.createObjectURL(blob);
-                                            
-                                            const link = document.createElement('a');
-                                            link.href = blobUrl;
-                                            link.download = fileName;
-                                            document.body.appendChild(link);
-                                            link.click();
-                                            document.body.removeChild(link);
-                                            URL.revokeObjectURL(blobUrl);
-                                          } else {
-                                            const link = document.createElement('a');
-                                            link.href = url;
-                                            link.download = fileName;
-                                            document.body.appendChild(link);
-                                            link.click();
-                                            document.body.removeChild(link);
-                                          }
-                                        } catch (error) {
-                                          console.error('Error downloading file:', error);
-                                          alert('Failed to download file. Please try again.');
-                                        }
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = fileName;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        document.body.removeChild(a);
                                       }}
                                       className="p-1 text-gray-600 hover:text-gray-800"
                                       title="Download image"
@@ -734,50 +714,19 @@ const EnhancedMessageThread = ({
                                         window.open(attachmentData.url, '_blank');
                                       }}
                                       className="p-1 text-gray-600 hover:text-gray-800"
-                                      title="View document"
                                     >
                                       <Eye size={14} />
                                     </button>
                                     <button
                                       onClick={() => {
-                                       try {
-                                        // Handle base64 data URLs and regular URLs for download
-                                        const url = attachmentData.url;
-                                        const fileName = attachmentData.name || `attachment_${index + 1}`;
-                                        
-                                        if (url.startsWith('data:')) {
-                                          // For base64 data, create a blob and download it
-                                          const byteCharacters = atob(url.split(',')[1]);
-                                          const byteNumbers = new Array(byteCharacters.length);
-                                          for (let i = 0; i < byteCharacters.length; i++) {
-                                            byteNumbers[i] = byteCharacters.charCodeAt(i);
-                                          }
-                                          const byteArray = new Uint8Array(byteNumbers);
-                                          const blob = new Blob([byteArray], { type: attachmentData.type || 'application/octet-stream' });
-                                          const blobUrl = URL.createObjectURL(blob);
-                                          
-                                          const link = document.createElement('a');
-                                          link.href = blobUrl;
-                                          link.download = fileName;
-                                          document.body.appendChild(link);
-                                          link.click();
-                                          document.body.removeChild(link);
-                                          URL.revokeObjectURL(blobUrl);
-                                        } else {
-                                          const link = document.createElement('a');
-                                          link.href = url;
-                                          link.download = fileName;
-                                          document.body.appendChild(link);
-                                          link.click();
-                                          document.body.removeChild(link);
-                                        }
-                                       } catch (error) {
-                                         console.error('Error downloading file:', error);
-                                         alert('Failed to download file. Please try again.');
-                                       }
+                                        const a = document.createElement('a');
+                                        a.href = attachmentData.url;
+                                        a.download = attachmentData.name || 'file';
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        document.body.removeChild(a);
                                       }}
                                       className="p-1 text-gray-600 hover:text-gray-800"
-                                      title="Download document"
                                     >
                                       <Download size={14} />
                                     </button>
