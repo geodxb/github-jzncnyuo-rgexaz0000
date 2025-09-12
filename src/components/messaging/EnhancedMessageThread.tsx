@@ -569,9 +569,9 @@ const EnhancedMessageThread = ({
                         // Check if it's an image - simplified detection
                         const isImage = attachmentData.url?.startsWith('data:image/') || 
                                       attachmentData.type?.startsWith('image/') ||
-                        // Check if it's an image - simplified detection for all roles
-                        const isImage = attachmentData.url?.startsWith('data:image/') || 
-                                      attachmentData.type?.startsWith('image/') ||
+                                      attachmentData.name?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+                        
+                        if (isImage) {
                           // Display image inline for all users
                           return (
                             <div key={index} className="mt-3">
@@ -599,16 +599,10 @@ const EnhancedMessageThread = ({
                                   <Download size={14} />
                                 </button>
                               </div>
-                                    try {
                               <img 
                                 src={attachmentData.url} 
                                 alt={attachmentData.name || 'Image'}
-                                      document.body.appendChild(link);
                                 className="w-full h-auto max-w-md rounded-lg shadow-sm"
-                                      document.body.removeChild(link);
-                                    } catch (error) {
-                                      console.error('Error downloading file:', error);
-                                    }
                                 style={{ maxHeight: '300px', objectFit: 'contain' }}
                                 onError={(e) => {
                                   console.error('Failed to load image:', attachmentData.name);
@@ -618,8 +612,41 @@ const EnhancedMessageThread = ({
                               />
                             </div>
                           );
-                       }
-                          // Display non-image files as attachment links
+                        }
+                        
+                        // Display non-image files as attachment links
+                        return (
+                          <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded border">
+                            <div className="flex items-center space-x-2">
+                              {getFileIcon(attachmentData.type)}
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">{attachmentData.name}</p>
+                                <p className="text-xs text-gray-500">
+                                  {attachmentData.size ? `${(attachmentData.size / 1024 / 1024).toFixed(2)} MB` : 'Unknown size'}
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => {
+                                try {
+                                  const link = document.createElement('a');
+                                  link.href = attachmentData.url;
+                                  link.download = attachmentData.name || `attachment_${index + 1}`;
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                } catch (error) {
+                                  console.error('Error downloading file:', error);
+                                }
+                              }}
+                              className="p-1 text-gray-600 hover:text-gray-800"
+                              title="Download file"
+                            >
+                              <Download size={14} />
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                   
