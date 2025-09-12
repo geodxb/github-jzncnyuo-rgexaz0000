@@ -165,6 +165,19 @@ const EnhancedConversationList = ({
                       {getConversationIcon(conversation)}
                     </div>
                     
+                    {/* CONVERSATION PREVIEW - RESTORED */}
+                    <div className="mb-2 p-2 bg-gray-50 rounded text-xs text-gray-600 border">
+                      <div className="line-clamp-2 leading-relaxed">
+                        {conversation.lastMessage ? (
+                          <span>
+                            <strong>{conversation.lastMessage.senderName}:</strong> {conversation.lastMessage.content}
+                          </span>
+                        ) : (
+                          <span className="italic">No messages yet</span>
+                        )}
+                      </div>
+                    </div>
+                    
                     <div className="flex-1 min-w-0">
                      {/* Conversation Title and Department */}
                      <div className="flex items-center justify-between mb-1">

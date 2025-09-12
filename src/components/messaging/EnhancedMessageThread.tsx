@@ -74,7 +74,6 @@ const EnhancedMessageThread = ({
     if (!enhancedLoading && !regularLoading) {
       const allMessagesList = [];
       
-      // Add enhanced messages
       enhancedMessages.forEach(msg => {
         allMessagesList.push({
           ...msg,
@@ -82,7 +81,6 @@ const EnhancedMessageThread = ({
         });
       });
       
-      // Add regular messages that don't exist in enhanced messages
       regularMessages.forEach(msg => {
         const existsInEnhanced = enhancedMessages.some(eMsg => 
           eMsg.id === msg.id || 
@@ -104,12 +102,10 @@ const EnhancedMessageThread = ({
         }
       });
       
-      // Sort all messages by timestamp
       const sorted = allMessagesList.sort((a, b) => 
         new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
       );
       
-      console.log('✅ All messages restored and sorted:', sorted.length);
       setAllMessages(sorted);
       setLoading(false);
     } else {
@@ -123,7 +119,6 @@ const EnhancedMessageThread = ({
     }
   }, [allMessages]);
 
-  // Helper function to get file icon based on file type
   const getFileIcon = (fileType: string) => {
     if (fileType.includes('pdf')) {
       return <FileText size={16} className="text-red-600" />;
@@ -140,7 +135,6 @@ const EnhancedMessageThread = ({
     }
   };
 
-  // Handle file upload
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
@@ -154,13 +148,11 @@ const EnhancedMessageThread = ({
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
-        // Validate file size (10MB limit)
         if (file.size > 10 * 1024 * 1024) {
           setUploadError(`File "${file.name}" is too large. Maximum size is 10MB.`);
           continue;
         }
 
-        // Validate file type
         const allowedTypes = [
           'application/pdf',
           'image/jpeg',
@@ -180,20 +172,14 @@ const EnhancedMessageThread = ({
           continue;
         }
 
-        // Convert file to base64 for storage
-        const base64Data = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
+        const fileUrl = URL.createObjectURL(file);
         
         const document: UploadedDocument = {
           id: `${Date.now()}-${i}`,
           name: file.name,
           size: file.size,
           type: file.type,
-          url: base64Data
+          url: fileUrl
         };
 
         newDocuments.push(document);
@@ -211,68 +197,34 @@ const EnhancedMessageThread = ({
     }
   };
 
-  // Remove document from attached list
   const removeDocument = (documentId: string) => {
-    setAttachedDocuments(prev => prev.filter(doc => doc.id !== documentId));
+    setAttachedDocuments(prev => {
+      const updated = prev.filter(doc => doc.id !== documentId);
+      const removedDoc = prev.find(doc => doc.id === documentId);
+      if (removedDoc) {
+        URL.revokeObjectURL(removedDoc.url);
+      }
+      return updated;
+    });
   };
 
-  // Handle image preview
   const handleImagePreview = (imageUrl: string, imageName: string) => {
     setPreviewImageUrl(imageUrl);
     setPreviewImageName(imageName);
     setShowImagePreview(true);
   };
 
-  // Handle file download
   const handleFileDownload = (fileUrl: string, fileName: string) => {
     try {
-      if (fileUrl.startsWith('data:')) {
-        // Handle base64 data URLs
-        const link = document.createElement('a');
-        link.href = fileUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
-        // Handle regular URLs
-        const link = document.createElement('a');
-        link.href = fileUrl;
-        link.download = fileName;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
       console.error('Download failed:', error);
       alert('Download failed. Please try again.');
-    }
-  };
-
-  // Handle file view (for PDFs)
-  const handleFileView = (fileUrl: string) => {
-    try {
-      if (fileUrl.startsWith('data:')) {
-        // Create blob URL for viewing
-        const byteCharacters = atob(fileUrl.split(',')[1]);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'application/pdf' });
-        const blobUrl = URL.createObjectURL(blob);
-        window.open(blobUrl, '_blank');
-        
-        // Clean up blob URL after a delay
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-      } else {
-        window.open(fileUrl, '_blank');
-      }
-    } catch (error) {
-      console.error('View failed:', error);
-      alert('Unable to view file. Please try downloading instead.');
     }
   };
 
@@ -282,15 +234,6 @@ const EnhancedMessageThread = ({
     setIsLoading(true);
     
     try {
-      console.log('🔄 Sending message:', {
-        conversationId,
-        userId: user.id,
-        userName: user.name,
-        userRole: user.role,
-        messageLength: newMessage.trim().length,
-        attachmentCount: attachedDocuments.length
-      });
-
       const messageRole = user.role === 'admin' ? 'admin' : 
                          user.role === 'governor' ? 'governor' : 'affiliate';
 
@@ -332,7 +275,6 @@ const EnhancedMessageThread = ({
       setNewMessage('');
       setReplyingTo(null);
       setAttachedDocuments([]);
-      console.log('✅ Message form reset');
     } catch (error) {
       console.error('Error sending enhanced message:', error);
       alert('Failed to send message. Please try again.');
@@ -483,7 +425,7 @@ const EnhancedMessageThread = ({
         </div>
       </div>
 
-      {/* Messages Area */}
+      {/* Messages Area - FIXED SPACING */}
       <div className="flex-1 overflow-y-auto p-6 bg-gray-50 min-h-0">
         {allMessages.length === 0 ? (
           <div className="text-center py-12">
@@ -504,7 +446,7 @@ const EnhancedMessageThread = ({
               msg.messageType === 'system' && 
               msg.content.includes('MANAGEMENT OVERSIGHT ACTIVATED')
             ) && (
-              <div className="bg-gray-100 border border-gray-300 p-4 rounded-lg">
+              <div className="bg-gray-100 border border-gray-300 p-4 mb-6 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-gray-200 border border-gray-400 flex items-center justify-center rounded-lg">
                     <User size={16} className="text-gray-700" />
@@ -528,7 +470,7 @@ const EnhancedMessageThread = ({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${message.senderId === user?.id ? 'justify-end' : 'justify-start'} mb-6`}
                 >
                   <div
                     className={`max-w-[85%] ${
@@ -603,14 +545,14 @@ const EnhancedMessageThread = ({
                       </div>
                     )}
                     
-                    {/* Message content with proper line breaks */}
+                    {/* Message content - FIXED LINE BREAKS */}
                     <div className="mb-4">
                       <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                         {message.content}
                       </div>
                     </div>
                     
-                    {/* Message Attachments */}
+                    {/* Message Attachments - FIXED IMAGE DISPLAY */}
                     {message.attachments && message.attachments.length > 0 && (
                       <div className="mt-4 space-y-3">
                         <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">
@@ -659,7 +601,7 @@ const EnhancedMessageThread = ({
                                       </button>
                                     </div>
                                   </div>
-                                  {/* Inline image display */}
+                                  {/* INLINE IMAGE DISPLAY */}
                                   <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 cursor-pointer"
                                        onClick={() => handleImagePreview(attachmentData.url, attachmentData.name)}>
                                     <img 
@@ -700,7 +642,7 @@ const EnhancedMessageThread = ({
                                   <div className="flex items-center space-x-1">
                                     {isPDF && (
                                       <button
-                                        onClick={() => handleFileView(attachmentData.url)}
+                                        onClick={() => window.open(attachmentData.url, '_blank')}
                                         className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
                                         title="View document"
                                       >
@@ -820,7 +762,6 @@ const EnhancedMessageThread = ({
       {/* Message Input */}
       <div className="px-4 py-2 bg-white border-t border-gray-200">
         <div className="flex items-end space-x-3">
-          {/* File Upload Button */}
           <div className="flex-shrink-0">
             <input
               ref={fileInputRef}
@@ -883,7 +824,7 @@ const EnhancedMessageThread = ({
         </p>
       </div>
 
-      {/* Image Preview Modal */}
+      {/* IMAGE PREVIEW MODAL - NEW FEATURE */}
       {showImagePreview && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setShowImagePreview(false)}>
           <div className="relative max-w-4xl max-h-[90vh] bg-white rounded-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
@@ -923,58 +864,44 @@ const EnhancedMessageThread = ({
         <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setShowEscalationModal(false)}>
           <div className="flex min-h-screen items-center justify-center p-4">
             <div 
-              className="relative w-full max-w-md bg-white rounded-lg shadow-xl overflow-hidden"
+              className="relative w-full max-w-md bg-white rounded-lg shadow-lg"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="px-6 py-4 border-b border-gray-100">
+              <div className="px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900 uppercase tracking-wide">
                   ESCALATE TO MANAGEMENT
                 </h3>
               </div>
               
               <div className="p-6">
-                <div className="space-y-4">
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div className="flex items-start space-x-3">
-                      <AlertTriangle size={20} className="text-red-600 mt-0.5" />
-                      <div>
-                        <h4 className="font-medium text-red-800 uppercase tracking-wide">ESCALATION NOTICE</h4>
-                        <p className="text-red-700 text-sm mt-1 uppercase tracking-wide">
-                          This will escalate the conversation to management and add a governor to the discussion.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 uppercase tracking-wide">
-                      Escalation Reason <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      value={escalationReason}
-                      onChange={(e) => setEscalationReason(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 font-medium"
-                      rows={3}
-                      placeholder="Explain why this conversation needs management attention..."
-                      required
-                    />
-                  </div>
-
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={() => setShowEscalationModal(false)}
-                      className="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 font-bold hover:bg-gray-50 transition-colors uppercase tracking-wide"
-                    >
-                      CANCEL
-                    </button>
-                    <button
-                      onClick={handleEscalate}
-                      disabled={!escalationReason.trim()}
-                      className="flex-1 px-4 py-2 bg-gray-900 text-white font-bold hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors uppercase tracking-wide border border-gray-700"
-                    >
-                      ESCALATE
-                    </button>
-                  </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 uppercase tracking-wide">
+                    ESCALATION REASON
+                  </label>
+                  <textarea
+                    value={escalationReason}
+                    onChange={(e) => setEscalationReason(e.target.value)}
+                    placeholder="Explain why this conversation needs management attention..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-300 focus:border-gray-300 resize-none"
+                    rows={4}
+                  />
+                </div>
+                
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => setShowEscalationModal(false)}
+                    className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium uppercase tracking-wide"
+                  >
+                    CANCEL
+                  </button>
+                  <button
+                    onClick={handleEscalate}
+                    disabled={!escalationReason.trim()}
+                    className="px-4 py-2 bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors font-medium uppercase tracking-wide"
+                  >
+                    <ArrowUp size={14} className="mr-1 inline" />
+                    ESCALATE
+                  </button>
                 </div>
               </div>
             </div>
