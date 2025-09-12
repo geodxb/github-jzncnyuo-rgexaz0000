@@ -509,7 +509,7 @@ const EnhancedMessageThread = ({
                         </button>
                       )}
                     </div>
-
+                    
                     {/* Reply indicator */}
                     {message.replyTo && (
                       <div className={`mb-3 p-2 rounded border-l-2 ${
@@ -522,7 +522,7 @@ const EnhancedMessageThread = ({
                         </p>
                       </div>
                     )}
-
+                    
                     {/* Message content */}
                     <div className="mb-3">
                       <p className={`text-sm leading-relaxed ${
@@ -531,49 +531,55 @@ const EnhancedMessageThread = ({
                         {message.content}
                       </p>
                     </div>
-
+                    
                     {/* Attachments */}
                     {message.attachmentUrls && message.attachmentUrls.length > 0 && (
                       <div className="mb-3 space-y-2">
                         {message.attachmentUrls.map((attachmentUrl: string, index: number) => {
-                          // Parse attachment data from URL
-                          let attachmentData: any = {};
-                          
+                          // Parse attachment data from URL or create default
+                          let attachmentData;
                           try {
                             if (attachmentUrl.startsWith('data:')) {
                               // Extract MIME type from data URL
                               const mimeMatch = attachmentUrl.match(/data:([^;]+)/);
-                              attachmentData.type = mimeMatch ? mimeMatch[1] : 'unknown';
-                              attachmentData.url = attachmentUrl;
-                              attachmentData.name = `attachment_${index + 1}`;
+                              const mimeType = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
                               
-                              // Try to determine file extension from MIME type
-                              if (attachmentData.type.includes('pdf')) {
-                                attachmentData.name += '.pdf';
-                              } else if (attachmentData.type.includes('image/jpeg')) {
-                                attachmentData.name += '.jpg';
-                              } else if (attachmentData.type.includes('image/png')) {
-                                attachmentData.name += '.png';
-                              } else if (attachmentData.type.includes('text')) {
-                                attachmentData.name += '.txt';
-                              }
+                              attachmentData = {
+                                name: `attachment_${index + 1}`,
+                                type: mimeType,
+                                url: attachmentUrl,
+                                size: 0 // Size not available from data URL
+                              };
                             } else {
-                              // Regular URL
-                              attachmentData.url = attachmentUrl;
-                              attachmentData.name = attachmentUrl.split('/').pop() || `attachment_${index + 1}`;
-                              attachmentData.type = 'unknown';
+                              // Regular URL - try to determine type from extension
+                              const urlParts = attachmentUrl.split('.');
+                              const extension = urlParts[urlParts.length - 1].toLowerCase();
+                              let mimeType = 'application/octet-stream';
+                              
+                              if (['jpg', 'jpeg'].includes(extension)) mimeType = 'image/jpeg';
+                              else if (extension === 'png') mimeType = 'image/png';
+                              else if (extension === 'pdf') mimeType = 'application/pdf';
+                              else if (extension === 'txt') mimeType = 'text/plain';
+                              
+                              attachmentData = {
+                                name: `attachment_${index + 1}.${extension}`,
+                                type: mimeType,
+                                url: attachmentUrl,
+                                size: 0
+                              };
                             }
                           } catch (error) {
                             console.error('Error parsing attachment:', error);
                             attachmentData = {
-                              url: attachmentUrl,
                               name: `attachment_${index + 1}`,
-                              type: 'unknown'
+                              type: 'application/octet-stream',
+                              url: attachmentUrl,
+                              size: 0
                             };
                           }
-
-                          const isImage = attachmentData.type?.includes('image');
-
+                          
+                          const isImage = attachmentData.type.startsWith('image/');
+                          
                           return (
                             <div key={index} className="mt-2">
                               {isImage ? (
