@@ -142,7 +142,6 @@ export class EnhancedMessageService {
         escalationReason: escalationReason || null,
         readBy: [],
         messageType: isEscalation ? 'escalation' : messageType,
-        attachments: []
         attachments: attachments || [],
       };
 
