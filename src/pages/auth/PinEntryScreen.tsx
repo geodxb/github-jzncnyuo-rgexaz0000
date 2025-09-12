@@ -81,15 +81,6 @@ const PinEntryScreen = ({ onAuthenticated }: PinEntryScreenProps) => {
     if (inputRef.current && !ipAccessDenied) {
       inputRef.current.focus();
     }
-    
-    // Add blinking cursor effect
-    const cursor = setInterval(() => {
-      if (inputRef.current && !ipAccessDenied) {
-        inputRef.current.style.borderRight = inputRef.current.style.borderRight === '2px solid #000' ? 'none' : '2px solid #000';
-      }
-    }, 500);
-    
-    return () => clearInterval(cursor);
   }, [ipAccessDenied]);
   
   useEffect(() => {
@@ -237,7 +228,7 @@ const PinEntryScreen = ({ onAuthenticated }: PinEntryScreenProps) => {
     
     // Add each message with a delay to simulate processing
     for (let i = 0; i < processingMessages.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 200 + Math.random() * 300)); // 200-500ms delay
+      await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 100)); // 50-150ms delay
       addToHistory(processingMessages[i]);
     }
     
@@ -257,7 +248,7 @@ const PinEntryScreen = ({ onAuthenticated }: PinEntryScreenProps) => {
       } else {
         window.location.href = '/affiliate-login';
       }
-    }, 1000);
+    }, 500);
   };
   
   if (isLoading) {
@@ -265,115 +256,204 @@ const PinEntryScreen = ({ onAuthenticated }: PinEntryScreenProps) => {
   }
   
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl">
-        {/* Interactive Brokers Header */}
-        <div className="text-center mb-8">
-          <img 
-            src="/Screenshot 2025-06-07 024813.png" 
-            alt="Interactive Brokers" 
-            className="h-12 w-auto object-contain mx-auto mb-4"
-          />
-          <div className="w-full h-1 bg-black mb-8"></div>
-        </div>
-        
-        {/* Terminal Window */}
+    <div className="min-h-screen bg-white flex items-center justify-center p-3 sm:p-4 relative overflow-hidden">
+      
+      <div className="w-full max-w-4xl relative z-10">
+        {/* Windows 95 Style Window */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="bg-white border-2 border-black shadow-lg"
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="mx-2 sm:mx-0 bg-white border-2"
+          style={{
+            borderTopColor: '#ffffff',
+            borderLeftColor: '#ffffff',
+            borderRightColor: '#808080',
+            borderBottomColor: '#808080',
+            boxShadow: '4px 4px 8px rgba(0,0,0,0.3)'
+          }}
         >
-          {/* Terminal Header */}
-          <div className="bg-black text-white px-4 py-2 flex items-center justify-between">
-            <span className="font-mono text-sm font-bold">INTERACTIVE BROKERS SECURITY TERMINAL</span>
-            <div className="flex space-x-2">
-              <div className="w-3 h-3 bg-white"></div>
-              <div className="w-3 h-3 bg-white"></div>
-              <div className="w-3 h-3 bg-white"></div>
+          {/* Windows 95 Title Bar */}
+          <div 
+            className="px-2 py-1 flex items-center text-black text-sm font-bold"
+            style={{
+              background: '#ffffff'
+            }}
+          >
+            <div className="flex items-center space-x-2 w-full justify-center">
+              <div className="w-4 h-4 bg-white border border-black flex items-center justify-center">
+                <span className="text-black text-xs font-bold">IB</span>
+              </div>
+              <span>Interactive Brokers Security Terminal</span>
             </div>
           </div>
           
-          {/* Terminal Content */}
-          <div className="p-6">
+          {/* Terminal Content Area */}
+          <div className="p-4 bg-white relative">
+            {/* Background logo overlay - 50% opacity */}
             <div 
-              ref={terminalRef}
-              className="bg-white border border-black p-4 h-96 overflow-y-auto font-mono text-sm"
+              className="absolute inset-0 flex items-center justify-center pointer-events-none"
+              style={{ zIndex: 1 }}
             >
-              {commandHistory.map((line, index) => (
-                <div key={index} className="text-black whitespace-pre-wrap">
-                  {line}
-                </div>
-              ))}
-              
-              {/* Current Input Line */}
-              {!ipAccessDenied && (
-                <form onSubmit={handleSubmit} className={`flex items-center mt-2 ${isBlocked ? 'opacity-50' : ''}`}>
-                  <span className="text-black mr-2">&gt;</span>
-                  <input
-                    ref={inputRef}
-                    type="password"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    className="flex-1 bg-transparent border-none outline-none text-black font-mono caret-black"
-                    placeholder={isBlocked ? 'ACCESS BLOCKED...' : 'Enter authentication code'}
-                    title="Enter 'crisdoraodxb' for admin access or 'allow-affiliate' for affiliate access"
-                    disabled={isBlocked}
-                    autoComplete="off"
-                    spellCheck={false}
-                    style={{ 
-                      WebkitTextSecurity: 'disc',
-                      textSecurity: 'disc'
-                    }}
-                  />
-                </form>
-              )}
+              <img 
+                src="/Screenshot 2025-06-07 024813.png" 
+                alt="Interactive Brokers" 
+                className="h-4 sm:h-6 w-auto object-contain"
+                style={{ opacity: 0.5 }}
+              />
             </div>
             
-            {/* Terminal Footer */}
-            <div className="mt-4 text-center">
-              {ipAccessDenied ? (
-                <div className="space-y-1">
-                  <p className="font-mono text-xs text-red-600 font-bold">
-                    SECURITY BREACH DETECTED - IP NOT AUTHORIZED
-                  </p>
-                  <p className="font-mono text-xs text-black">
-                    Client IP: {clientIP} | Status: BLOCKED
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  <p className="font-mono text-xs text-black">
-                    SECURE AUTHENTICATION REQUIRED
-                  </p>
-                  {isBlocked && (
-                    <p className="font-mono text-xs text-red-600 mt-2">
-                      SECURITY LOCKOUT ACTIVE - PLEASE WAIT 30 SECONDS
-                    </p>
-                  )}
-                </div>
-              )}
+            {/* Terminal screen */}
+            <div 
+              ref={terminalRef}
+              className="relative h-64 sm:h-96 overflow-y-auto font-mono text-xs sm:text-sm p-3 bg-white border-2"
+              style={{
+                borderTopColor: '#808080',
+                borderLeftColor: '#808080',
+                borderRightColor: '#ffffff',
+                borderBottomColor: '#ffffff',
+                zIndex: 2
+              }}
+            >
+              {/* Interactive Brokers Logo Background */}
+              <div 
+                className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                style={{ zIndex: 1 }}
+              >
+                <img 
+                  src="/Screenshot 2025-06-07 024813.png" 
+                  alt="Interactive Brokers" 
+                  className="h-6 sm:h-8 w-auto object-contain"
+                  style={{ opacity: 0.5 }}
+                />
+              </div>
+              
+              {/* Terminal content */}
+              <div className="relative z-10">
+                {commandHistory.map((line, index) => (
+                  <motion.div 
+                    key={index} 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.1, delay: index * 0.02 }}
+                    className="whitespace-pre-wrap leading-tight text-black"
+                    style={{
+                      fontFamily: 'Courier New, monospace'
+                    }}
+                  >
+                    {line}
+                  </motion.div>
+                ))}
+                
+                {/* Current Input Line */}
+                {!ipAccessDenied && (
+                  <form onSubmit={handleSubmit} className={`flex items-center mt-2 ${isBlocked ? 'opacity-50' : ''}`}>
+                    <span 
+                      className="mr-2 text-black"
+                      style={{
+                        fontFamily: 'Courier New, monospace'
+                      }}
+                    >
+                      {"C:\\>"}
+                    </span>
+                    <input
+                      ref={inputRef}
+                      type="password"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      className="flex-1 bg-transparent border-none outline-none font-mono text-xs sm:text-sm text-black"
+                      placeholder={isBlocked ? 'ACCESS BLOCKED...' : 'Enter authentication code'}
+                      disabled={isBlocked}
+                      autoComplete="off"
+                      spellCheck={false}
+                      style={{ 
+                        fontFamily: 'Courier New, monospace',
+                        caretColor: '#000000'
+                      }}
+                    />
+                    {/* Blinking cursor */}
+                    <span 
+                      className="ml-1 animate-pulse text-black"
+                      style={{ fontFamily: 'Courier New, monospace' }}
+                    >
+                      _
+                    </span>
+                  </form>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Windows 95 Status Bar */}
+          <div 
+            className="px-2 py-1 bg-white border-t text-xs flex items-center justify-between"
+            style={{
+              borderTopColor: '#ffffff'
+            }}
+          >
+            <div className="flex items-center space-x-4">
+              <div 
+                className="px-2 py-1 border bg-white"
+                style={{
+                  borderTopColor: '#808080',
+                  borderLeftColor: '#808080',
+                  borderRightColor: '#ffffff',
+                  borderBottomColor: '#ffffff'
+                }}
+              >
+                <span className="text-black">
+                  {ipAccessDenied ? 'ACCESS DENIED' : isBlocked ? 'BLOCKED' : 'READY'}
+                </span>
+              </div>
+              <span className="text-black">
+                {ipAccessDenied ? `IP: ${clientIP}` : 'Secure Terminal Active'}
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div 
+                className="w-3 h-3 border"
+                style={{
+                  borderTopColor: '#808080',
+                  borderLeftColor: '#808080',
+                  borderRightColor: '#ffffff',
+                  borderBottomColor: '#ffffff',
+                  backgroundColor: ipAccessDenied ? '#000000' : '#000000'
+                }}
+              />
+              <span className="text-black text-xs">
+                {new Date().toLocaleTimeString()}
+              </span>
             </div>
           </div>
         </motion.div>
-          
-        {/* Footer */}
-        <div className="text-center mt-8">
-          {ipAccessDenied ? (
-            <div className="space-y-2">
-              <p className="font-mono text-xs text-black">
-                Interactive Brokers LLC | Security System Active
-              </p>
-              <p className="font-mono text-xs text-red-600">
-                UNAUTHORIZED ACCESS ATTEMPT LOGGED
-              </p>
-            </div>
-          ) : (
-            <p className="font-mono text-xs text-black">
-              Interactive Brokers LLC | All Rights Reserved
-            </p>
-          )}
-        </div>
+        
+        {/* Windows 95 Style Footer */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+          className="text-center mt-6 sm:mt-8"
+        >
+          <div 
+            className="inline-block px-4 py-2 bg-white border-2 text-black text-xs"
+            style={{
+              borderTopColor: '#ffffff',
+              borderLeftColor: '#ffffff',
+              borderRightColor: '#808080',
+              borderBottomColor: '#808080',
+              boxShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+            }}
+          >
+            {ipAccessDenied ? (
+              <div className="space-y-1">
+                <div className="font-bold">Interactive Brokers LLC | Security System</div>
+                <div className="text-black font-bold">UNAUTHORIZED ACCESS BLOCKED</div>
+              </div>
+            ) : (
+              <div>Interactive Brokers LLC | All Rights Reserved</div>
+            )}
+          </div>
+        </motion.div>
       </div>
     </div>
   );
