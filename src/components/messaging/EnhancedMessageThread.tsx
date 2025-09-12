@@ -706,7 +706,6 @@ const EnhancedMessageThread = ({
                                   window.open(url, '_blank');
                                 }
                               }}
-                                    const blob = new Blob([byteArray], { type: attachmentData.type || 'application/octet-stream' });
                               title="View document"
                             >
                               <Eye size={14} />
