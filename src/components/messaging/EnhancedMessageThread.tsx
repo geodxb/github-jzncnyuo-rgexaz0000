@@ -172,7 +172,21 @@ const EnhancedMessageThread = ({
           continue;
         }
 
-        const fileUrl = URL.createObjectURL(file);
+        // Convert images to base64 for permanent storage and display
+        let fileUrl: string;
+        if (file.type.startsWith('image/')) {
+          // Convert image to base64
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+          fileUrl = base64;
+        } else {
+          // For non-images, use object URL (temporary)
+          fileUrl = URL.createObjectURL(file);
+        }
         
         const document: UploadedDocument = {
           id: `${Date.now()}-${i}`,
@@ -200,8 +214,9 @@ const EnhancedMessageThread = ({
   const removeDocument = (documentId: string) => {
     setAttachedDocuments(prev => {
       const updated = prev.filter(doc => doc.id !== documentId);
+      // Only revoke object URLs, not base64 data URLs
       const removedDoc = prev.find(doc => doc.id === documentId);
-      if (removedDoc) {
+      if (removedDoc && removedDoc.url.startsWith('blob:')) {
         URL.revokeObjectURL(removedDoc.url);
       }
       return updated;
@@ -237,7 +252,12 @@ const EnhancedMessageThread = ({
       const messageRole = user.role === 'admin' ? 'admin' : 
                          user.role === 'governor' ? 'governor' : 'affiliate';
 
-      const attachmentUrls = attachedDocuments.map(doc => doc.url);
+      const attachmentUrls = attachedDocuments.map(doc => ({
+        url: doc.url,
+        name: doc.name,
+        type: doc.type,
+        size: doc.size
+      }));
 
       try {
         const messageId = await EnhancedMessageService.sendEnhancedMessage(
@@ -562,24 +582,25 @@ const EnhancedMessageThread = ({
                           // Handle both string URLs and attachment objects
                           let attachmentData;
                           if (typeof attachment === 'string') {
-                            // Detect file type from URL or extension
+                            // Enhanced image detection for URLs and base64
                             const isImageUrl = attachment.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) || 
                                              attachment.startsWith('data:image/') ||
-                                             attachment.includes('image');
+                                             attachment.includes('image') ||
+                                             attachment.includes('blob:') && attachment.includes('image');
                             attachmentData = { 
                               url: attachment, 
                               name: `Attachment ${index + 1}`, 
-                              type: isImageUrl ? 'image/jpeg' : 'unknown', 
+                              type: isImageUrl ? 'image/jpeg' : 'application/octet-stream', 
                               size: 0 
                             };
                           } else {
                             attachmentData = attachment;
                           }
                           
-                          const isImage = attachmentData.type?.includes('image') || 
+                          // Enhanced image detection
+                          const isImage = attachmentData.type?.startsWith('image/') || 
                                         attachmentData.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) ||
-                                        attachmentData.url?.startsWith('data:image/') ||
-                                        attachmentData.url?.includes('image');
+                                        attachmentData.url?.startsWith('data:image/');
                           
                           const isPDF = attachmentData.type?.includes('pdf') || 
                                       attachmentData.name?.toLowerCase().endsWith('.pdf');
@@ -587,92 +608,98 @@ const EnhancedMessageThread = ({
                           return (
                             <div key={index} className="space-y-2">
                               {isImage ? (
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between">
+                                <>
+                                  <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center space-x-2">
+                                        <Image size={16} className="text-blue-600" />
+                                        <span className="text-sm font-medium text-gray-900">{attachmentData.name}</span>
+                                        {attachmentData.size > 0 && (
+                                          <span className="text-xs text-gray-500">
+                                            {(attachmentData.size / 1024 / 1024).toFixed(2)} MB
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center space-x-1">
+                                        <button
+                                          onClick={() => handleImagePreview(attachmentData.url, attachmentData.name)}
+                                          className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
+                                          title="Preview image"
+                                        >
+                                          <ZoomIn size={14} />
+                                        </button>
+                                        <button
+                                          onClick={() => handleFileDownload(attachmentData.url, attachmentData.name)}
+                                          className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
+                                          title="Download image"
+                                        >
+                                          <Download size={14} />
+                                        </button>
+                                      </div>
+                                    </div>
+                                    {/* INLINE IMAGE DISPLAY - IMPROVED */}
+                                    <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 cursor-pointer max-w-xs mt-2"
+                                         onClick={() => handleImagePreview(attachmentData.url, attachmentData.name)}>
+                                      <img 
+                                        src={attachmentData.url} 
+                                        alt={attachmentData.name}
+                                        className="w-full h-auto max-h-32 object-cover hover:scale-105 transition-transform duration-200"
+                                        loading="lazy"
+                                        onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          // Hide broken image and show fallback
+                                          const parent = target.parentElement;
+                                          if (parent) {
+                                            parent.innerHTML = `
+                                              <div class="p-3 text-center text-gray-500 bg-gray-100 border border-gray-300 rounded">
+                                                <div class="flex items-center justify-center mb-2">
+                                                  <div class="w-6 h-6 bg-gray-300 rounded flex items-center justify-center">
+                                                    <span class="text-gray-600 text-xs">IMG</span>
+                                                  </div>
+                                                </div>
+                                                <p class="text-xs font-medium text-gray-700">Image could not be displayed</p>
+                                                <p class="text-xs text-gray-500 mt-1">${attachmentData.name}</p>
+                                              </div>
+                                            `;
+                                          }
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  {/* NON-IMAGE ATTACHMENTS */}
+                                  <div className="flex items-center justify-between bg-gray-50 p-3 rounded border">
                                     <div className="flex items-center space-x-2">
-                                      <Image size={16} className="text-blue-600" />
-                                      <span className="text-sm font-medium text-gray-900">{attachmentData.name}</span>
-                                      {attachmentData.size > 0 && (
-                                        <span className="text-xs text-gray-500">
-                                          {(attachmentData.size / 1024 / 1024).toFixed(2)} MB
-                                        </span>
-                                      )}
+                                      {getFileIcon(attachmentData.type)}
+                                      <div>
+                                        <p className="text-sm font-medium text-gray-900">{attachmentData.name}</p>
+                                        <p className="text-xs text-gray-500">
+                                          {attachmentData.size > 0 ? (attachmentData.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown size'}
+                                        </p>
+                                      </div>
                                     </div>
                                     <div className="flex items-center space-x-1">
-                                      <button
-                                        onClick={() => handleImagePreview(attachmentData.url, attachmentData.name)}
-                                        className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
-                                        title="Preview image"
-                                      >
-                                        <ZoomIn size={14} />
-                                      </button>
+                                      {isPDF && (
+                                        <button
+                                          onClick={() => window.open(attachmentData.url, '_blank')}
+                                          className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
+                                          title="View document"
+                                        >
+                                          <Eye size={14} />
+                                        </button>
+                                      )}
                                       <button
                                         onClick={() => handleFileDownload(attachmentData.url, attachmentData.name)}
                                         className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
-                                        title="Download image"
+                                        title="Download document"
                                       >
                                         <Download size={14} />
                                       </button>
                                     </div>
                                   </div>
-                                  {/* INLINE IMAGE DISPLAY - IMPROVED */}
-                                  <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 cursor-pointer max-w-sm"
-                                       onClick={() => handleImagePreview(attachmentData.url, attachmentData.name)}>
-                                    <img 
-                                      src={attachmentData.url} 
-                                      alt={attachmentData.name}
-                                      className="w-full h-auto max-h-48 object-cover hover:scale-105 transition-transform duration-200"
-                                      onError={(e) => {
-                                        const target = e.target as HTMLImageElement;
-                                        // Hide broken image and show fallback
-                                        const parent = target.parentElement;
-                                        if (parent) {
-                                          parent.innerHTML = `
-                                            <div class="p-4 text-center text-gray-500 bg-gray-100 border border-gray-300 rounded">
-                                              <div class="flex items-center justify-center mb-2">
-                                                <div class="w-8 h-8 bg-gray-300 rounded flex items-center justify-center">
-                                                  <span class="text-gray-600 text-xs">IMG</span>
-                                                </div>
-                                              </div>
-                                              <p class="text-sm font-medium text-gray-700">Image could not be displayed</p>
-                                              <p class="text-xs text-gray-500 mt-1">${attachmentData.name}</p>
-                                            </div>
-                                          `;
-                                        }
-                                      }}
-                                    />
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="flex items-center justify-between bg-gray-50 p-3 rounded border">
-                                  <div className="flex items-center space-x-2">
-                                    {getFileIcon(attachmentData.type)}
-                                    <div>
-                                      <p className="text-sm font-medium text-gray-900">{attachmentData.name}</p>
-                                      <p className="text-xs text-gray-500">
-                                        {attachmentData.size > 0 ? (attachmentData.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown size'}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center space-x-1">
-                                    {isPDF && (
-                                      <button
-                                        onClick={() => window.open(attachmentData.url, '_blank')}
-                                        className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
-                                        title="View document"
-                                      >
-                                        <Eye size={14} />
-                                      </button>
-                                    )}
-                                    <button
-                                      onClick={() => handleFileDownload(attachmentData.url, attachmentData.name)}
-                                      className="p-1 text-gray-600 hover:text-gray-800 transition-colors"
-                                      title="Download document"
-                                    >
-                                      <Download size={14} />
-                                    </button>
-                                  </div>
-                                </div>
+                                </>
                               )}
                             </div>
                           );
