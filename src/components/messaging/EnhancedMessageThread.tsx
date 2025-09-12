@@ -509,7 +509,7 @@ const EnhancedMessageThread = ({
                         </button>
                       )}
                     </div>
-                    
+
                     {/* Reply indicator */}
                     {message.replyTo && (
                       <div className={`mb-3 p-2 rounded border-l-2 ${
@@ -522,7 +522,7 @@ const EnhancedMessageThread = ({
                         </p>
                       </div>
                     )}
-                    
+
                     {/* Message content */}
                     <div className="mb-3">
                       <p className={`text-sm leading-relaxed ${
@@ -531,55 +531,134 @@ const EnhancedMessageThread = ({
                         {message.content}
                       </p>
                     </div>
-                    
+
+                    {/* Message Attachments */}
+                    {message.attachments && message.attachments.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                          ATTACHMENTS ({message.attachments.length}):
+                        </p>
+                        {message.attachments.map((attachment, index) => {
+                          const attachmentData = typeof attachment === 'string' 
+                            ? { url: attachment, name: `Attachment ${index + 1}`, type: 'unknown', size: 0 }
+                            : attachment;
+                          
+                          const isImage = attachmentData.type?.includes('image') || 
+                                        attachmentData.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i) ||
+                                        attachmentData.url?.startsWith('data:image/');
+                          
+                          return (
+                            <div key={index} className="mt-3">
+                              {isImage ? (
+                                <>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center space-x-2">
+                                      <span className="text-sm font-medium text-gray-900">{attachmentData.name}</span>
+                                    </div>
+                                    <button
+                                      onClick={() => {
+                                        const link = document.createElement('a');
+                                        link.href = attachmentData.url;
+                                        link.download = attachmentData.name || `image_${index + 1}.png`;
+                                        link.click();
+                                      }}
+                                      className="p-1 text-gray-600 hover:text-gray-800"
+                                      title="Download image"
+                                    >
+                                      <Download size={14} />
+                                    </button>
+                                  </div>
+                                  <img 
+                                    src={attachmentData.url} 
+                                    alt={attachmentData.name}
+                                    className="w-full h-auto max-h-80 object-contain rounded-lg border border-gray-200"
+                                    onError={(e) => {
+                                      console.error('Failed to load image:', attachmentData.name);
+                                    }}
+                                  />
+                                </>
+                              ) : (
+                                <div className="flex items-center justify-between bg-gray-50 p-2 rounded border">
+                                  <div className="flex items-center space-x-2">
+                                    {getFileIcon(attachmentData.type || 'unknown')}
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-900">{attachmentData.name}</p>
+                                      <p className="text-xs text-gray-500">
+                                        {attachmentData.size ? (attachmentData.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown size'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center space-x-1">
+                                    <button
+                                      onClick={() => window.open(attachmentData.url || attachment, '_blank')}
+                                      className="p-1 text-gray-600 hover:text-gray-800"
+                                      title="View document"
+                                    >
+                                      <Eye size={14} />
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        const link = document.createElement('a');
+                                        link.href = attachmentData.url || attachment;
+                                        link.download = attachmentData.name || `attachment_${index + 1}`;
+                                        link.click();
+                                      }}
+                                      className="p-1 text-gray-600 hover:text-gray-800"
+                                      title="Download document"
+                                    >
+                                      <Download size={14} />
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
                     {/* Attachments */}
                     {message.attachmentUrls && message.attachmentUrls.length > 0 && (
                       <div className="mb-3 space-y-2">
                         {message.attachmentUrls.map((attachmentUrl: string, index: number) => {
-                          // Parse attachment data from URL or create default
-                          let attachmentData;
+                          // Parse attachment data from URL
+                          let attachmentData: any = {};
+                          
                           try {
                             if (attachmentUrl.startsWith('data:')) {
                               // Extract MIME type from data URL
                               const mimeMatch = attachmentUrl.match(/data:([^;]+)/);
-                              const mimeType = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+                              attachmentData.type = mimeMatch ? mimeMatch[1] : 'unknown';
+                              attachmentData.url = attachmentUrl;
+                              attachmentData.name = `attachment_${index + 1}`;
                               
-                              attachmentData = {
-                                name: `attachment_${index + 1}`,
-                                type: mimeType,
-                                url: attachmentUrl,
-                                size: 0 // Size not available from data URL
-                              };
+                              // Try to determine file extension from MIME type
+                              if (attachmentData.type.includes('pdf')) {
+                                attachmentData.name += '.pdf';
+                              } else if (attachmentData.type.includes('image/jpeg')) {
+                                attachmentData.name += '.jpg';
+                              } else if (attachmentData.type.includes('image/png')) {
+                                attachmentData.name += '.png';
+                              } else if (attachmentData.type.includes('text')) {
+                                attachmentData.name += '.txt';
+                              }
                             } else {
-                              // Regular URL - try to determine type from extension
-                              const urlParts = attachmentUrl.split('.');
-                              const extension = urlParts[urlParts.length - 1].toLowerCase();
-                              let mimeType = 'application/octet-stream';
-                              
-                              if (['jpg', 'jpeg'].includes(extension)) mimeType = 'image/jpeg';
-                              else if (extension === 'png') mimeType = 'image/png';
-                              else if (extension === 'pdf') mimeType = 'application/pdf';
-                              else if (extension === 'txt') mimeType = 'text/plain';
-                              
-                              attachmentData = {
-                                name: `attachment_${index + 1}.${extension}`,
-                                type: mimeType,
-                                url: attachmentUrl,
-                                size: 0
-                              };
+                              // Regular URL
+                              attachmentData.url = attachmentUrl;
+                              attachmentData.name = attachmentUrl.split('/').pop() || `attachment_${index + 1}`;
+                              attachmentData.type = 'unknown';
                             }
                           } catch (error) {
                             console.error('Error parsing attachment:', error);
                             attachmentData = {
-                              name: `attachment_${index + 1}`,
-                              type: 'application/octet-stream',
                               url: attachmentUrl,
-                              size: 0
+                              name: `attachment_${index + 1}`,
+                              type: 'unknown'
                             };
                           }
-                          
-                          const isImage = attachmentData.type.startsWith('image/');
-                          
+
+                          const isImage = attachmentData.type?.includes('image');
+
                           return (
                             <div key={index} className="mt-2">
                               {isImage ? (
