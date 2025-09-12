@@ -569,21 +569,57 @@ const EnhancedMessageThread = ({
                         // Check if it's an image - simplified detection
                         const isImage = attachmentData.url?.startsWith('data:image/') || 
                                       attachmentData.type?.startsWith('image/') ||
-                                      /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentData.name || '');
-                       
-                       if (isImage) {
-                          // Display image directly inline
+                        // Check if it's an image - simplified detection for all roles
+                        const isImage = attachmentData.url?.startsWith('data:image/') || 
+                                      attachmentData.type?.startsWith('image/') ||
+                          // Display image inline for all users
                           return (
-                            <img 
-                              key={index}
-                              src={attachmentData.url} 
-                              alt={attachmentData.name || 'Image'}
-                              className="mt-2 max-w-full h-auto rounded-lg shadow-sm"
-                              style={{ maxWidth: '400px' }}
-                            />
+                            <div key={index} className="mt-3">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center space-x-2">
+                                  <Image size={16} className="text-blue-600" />
+                                  <span className="text-sm font-medium text-gray-900">{attachmentData.name}</span>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    try {
+                                      const link = document.createElement('a');
+                                      link.href = attachmentData.url;
+                                      link.download = attachmentData.name || `image_${index + 1}.png`;
+                                      document.body.appendChild(link);
+                                      link.click();
+                                      document.body.removeChild(link);
+                                    } catch (error) {
+                                      console.error('Error downloading image:', error);
+                                    }
+                                  }}
+                                  className="p-1 text-gray-600 hover:text-gray-800"
+                                  title="Download image"
+                                >
+                                  <Download size={14} />
+                                </button>
+                              </div>
+                                    try {
+                              <img 
+                                src={attachmentData.url} 
+                                alt={attachmentData.name || 'Image'}
+                                      document.body.appendChild(link);
+                                className="w-full h-auto max-w-md rounded-lg shadow-sm"
+                                      document.body.removeChild(link);
+                                    } catch (error) {
+                                      console.error('Error downloading file:', error);
+                                    }
+                                style={{ maxHeight: '300px', objectFit: 'contain' }}
+                                onError={(e) => {
+                                  console.error('Failed to load image:', attachmentData.name);
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                }}
+                              />
+                            </div>
                           );
                        }
-                      })}
+                          // Display non-image files as attachment links
                     </div>
                   )}
                   
