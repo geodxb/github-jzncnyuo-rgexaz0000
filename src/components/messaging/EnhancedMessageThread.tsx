@@ -566,102 +566,22 @@ const EnhancedMessageThread = ({
                           ? { url: attachment, name: `Attachment ${index + 1}`, type: 'unknown', size: 0 }
                           : attachment;
                         
-                        // Check if it's an image - improved detection
+                        // Check if it's an image - simplified detection
                         const isImage = attachmentData.url?.startsWith('data:image/') || 
-                                      attachmentData.type?.includes('image') || 
-                                      attachmentData.name?.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i);
+                                      attachmentData.type?.startsWith('image/') ||
+                                      /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(attachmentData.name || '');
                        
                        if (isImage) {
                           // Display image directly inline
                          return (
                            <div key={index} className="mt-3">
-                             <div className="flex items-center justify-between mb-2">
-                               <div className="flex items-center space-x-2">
-                                 <Image size={16} className="text-blue-600" />
-                                 <span className="text-sm font-medium text-gray-900">{attachmentData.name}</span>
-                                 <span className="text-xs text-gray-500">
-                                   {attachmentData.size ? (attachmentData.size / 1024 / 1024).toFixed(2) + ' MB' : ''}
-                                 </span>
-                               </div>
-                               <button
-                                 onClick={() => {
-                                   // Handle base64 data URLs and regular URLs for download
-                                   const url = attachmentData.url;
-                                   const fileName = attachmentData.name || `attachment_${index + 1}`;
-                                   
-                                   try {
-                                     if (url.startsWith('data:')) {
-                                       // For base64 data, create a blob and download it
-                                       const byteCharacters = atob(url.split(',')[1]);
-                                       const byteNumbers = new Array(byteCharacters.length);
-                                       for (let i = 0; i < byteCharacters.length; i++) {
-                                         byteNumbers[i] = byteCharacters.charCodeAt(i);
-                                       }
-                                       const byteArray = new Uint8Array(byteNumbers);
-                                       const blob = new Blob([byteArray], { type: attachmentData.type || 'application/octet-stream' });
-                                       const blobUrl = URL.createObjectURL(blob);
-                                       
-                                       const link = document.createElement('a');
-                                       link.href = blobUrl;
-                                       link.download = fileName;
-                                       document.body.appendChild(link);
-                                       link.click();
-                                       document.body.removeChild(link);
-                                       URL.revokeObjectURL(blobUrl);
-                                     } else {
-                                       const link = document.createElement('a');
-                                       link.href = url;
-                                       link.download = fileName;
-                                       document.body.appendChild(link);
-                                       link.click();
-                                       document.body.removeChild(link);
-                                     }
-                                   } catch (error) {
-                                     console.error('Error downloading file:', error);
-                                     alert('Failed to download file. Please try again.');
-                                   }
-                                 }}
-                                 className="p-1 text-gray-600 hover:text-gray-800"
-                                 title="Download image"
-                               >
-                                 <Download size={14} />
-                               </button>
-                             </div>
-                            <div key={index} className="mt-2">
-                              <img 
-                                src={attachmentData.url} 
-                                alt={attachmentData.name || 'Image'}
-                                className="max-w-full h-auto rounded-lg shadow-sm"
-                                style={{ maxWidth: '400px', height: 'auto' }}
-                                onError={(e) => {
-                                  console.error('Failed to load image:', attachmentData.name);
-                                  const target = e.target as HTMLImageElement;
-                                  target.style.display = 'none';
-                                }}
-                                onLoad={() => {
-                                  console.log('Image loaded successfully:', attachmentData.name);
-                                }}
-                              />
-                            </div>
-                          </div>
-                         );
-                       } else {
-                          // Display non-image attachments as download links
-                          return (
-                        <div key={index} className="mt-2">
-                          <p className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">
-                            ATTACHMENT:
-                          </p>
-                          <div className="flex items-center justify-between bg-gray-50 p-2 rounded border">
-                            <div className="flex items-center space-x-2">
-                              {getFileIcon(attachmentData.type || '')}
-                              <div>
-                                <p className="text-sm font-medium text-gray-900">{attachmentData.name}</p>
-                                <p className="text-xs text-gray-500">
-                                  {attachmentData.size ? (attachmentData.size / 1024 / 1024).toFixed(2) + ' MB' : 'Unknown size'}
-                                </p>
-                              </div>
-                            </div>
+                            <img 
+                              key={index}
+                              src={attachmentData.url} 
+                              alt={attachmentData.name || 'Image'}
+                              className="mt-2 max-w-full h-auto rounded-lg shadow-sm"
+                              style={{ maxWidth: '400px' }}
+                            />
                           <div className="flex items-center space-x-1">
                             {/* Only show view button for PDFs and documents */}
                             {(attachmentData.type?.includes('pdf') || 
