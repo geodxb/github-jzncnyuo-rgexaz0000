@@ -89,7 +89,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     const loadTranslationsForLanguage = async () => {
       const translationData = await loadTranslations(language);
       setTranslations(translationData);
-    };
+            translations = await import("./translations/es");
 
     loadTranslationsForLanguage();
   }, [language]);
