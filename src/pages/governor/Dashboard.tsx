@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import GovernorLayout from '../../components/layout/GovernorLayout';
-import AccountCreationRequests from '../../components/governor/AccountCreationRequests.tsx';
+import AccountCreationRequests from '../../components/governor/AccountCreationRequests';
 import { useInvestors, useWithdrawalRequests, useTransactions } from '../../hooks/useFirestore';
 import { AccountClosureService } from '../../services/accountClosureService';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';

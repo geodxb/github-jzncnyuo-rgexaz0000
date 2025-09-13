@@ -4,7 +4,7 @@ import Card from '../../components/common/Card';
 import Table from '../../components/common/Table';
 import Button from '../../components/common/Button';
 import AddInvestorModal from '../../components/admin/AddInvestorModal';
-import InvestorOnboardingFlow from '../../components/onboarding/InvestorOnboardingFlow.tsx';
+import InvestorOnboardingFlow from '../../components/onboarding/InvestorOnboardingFlow';
 import { useInvestors } from '../../hooks/useFirestore';
 import { useNavigate } from 'react-router-dom';
 
