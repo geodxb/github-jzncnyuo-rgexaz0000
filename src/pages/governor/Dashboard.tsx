@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import GovernorLayout from '../../components/layout/GovernorLayout';
+import AccountCreationRequests from '../../components/governor/AccountCreationRequests';
 import { useInvestors, useWithdrawalRequests, useTransactions } from '../../hooks/useFirestore';
 import { AccountClosureService } from '../../services/accountClosureService';
 import { collection, query, orderBy, getDocs } from 'firebase/firestore';
@@ -11,6 +12,7 @@ import { db } from '../../lib/firebase';
 const GovernorDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [showAccountRequests, setShowAccountRequests] = useState(false);
   const { investors } = useInvestors();
   const { withdrawalRequests } = useWithdrawalRequests();
   const { transactions } = useTransactions();
@@ -309,6 +311,18 @@ const GovernorDashboard = () => {
 
         <div className="bg-white border border-gray-300 p-6">
           <div className="flex items-center space-x-3 mb-4">
+            <h3 className="text-lg font-bold text-gray-900 uppercase tracking-wide">ACCOUNT REQUESTS</h3>
+          </div>
+          <p className="text-gray-700 text-sm mb-4 uppercase tracking-wide">Review and approve new investor applications</p>
+          <button 
+            onClick={() => setShowAccountRequests(true)}
+            className="w-full px-4 py-3 bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors uppercase tracking-wide"
+          >
+            REVIEW APPLICATIONS
+          </button>
+        </div>
+        <div className="bg-white border border-gray-300 p-6">
+          <div className="flex items-center space-x-3 mb-4">
             <h3 className="text-lg font-bold text-gray-900 uppercase tracking-wide">SYSTEM MONITORING</h3>
           </div>
           <p className="text-gray-700 text-sm mb-4 uppercase tracking-wide">Real-time monitoring of all platform activities</p>
@@ -346,6 +360,12 @@ const GovernorDashboard = () => {
           </button>
         </div>
       </div>
+
+      {/* Account Creation Requests Modal */}
+      <AccountCreationRequests
+        isOpen={showAccountRequests}
+        onClose={() => setShowAccountRequests(false)}
+      />
     </GovernorLayout>
   );
 };

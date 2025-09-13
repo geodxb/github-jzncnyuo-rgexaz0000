@@ -847,6 +847,69 @@ export class FirestoreService {
     }
   }
 
+  // Add document to collection
+  static async addDoc(collectionName: string, data: any): Promise<string> {
+    try {
+      console.log(`🔥 Firebase: Adding document to ${collectionName}...`);
+      const docRef = await addDoc(collection(db, collectionName), {
+        ...data,
+        createdAt: serverTimestamp()
+      });
+      console.log(`✅ Firebase: Document added successfully: ${docRef.id}`);
+      return docRef.id;
+    } catch (error) {
+      console.error(`❌ Firebase Error: Failed to add document to ${collectionName}:`, error);
+      throw new Error(`Failed to add document: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  // Get account creation requests
+  static async getAccountCreationRequests(): Promise<any[]> {
+    try {
+      console.log('🔥 Firebase: Fetching account creation requests...');
+      const requestsQuery = query(
+        collection(db, 'accountCreationRequests'),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const querySnapshot = await getDocs(requestsQuery);
+      
+      const requests = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          requestedAt: data.requestedAt?.toDate() || new Date(),
+          submittedAt: data.submittedAt?.toDate() || new Date(),
+          reviewedAt: data.reviewedAt?.toDate() || null,
+          createdAt: data.createdAt?.toDate() || new Date()
+        };
+      });
+      
+      console.log(`✅ Firebase: Retrieved ${requests.length} account creation requests`);
+      return requests;
+    } catch (error) {
+      console.error('❌ Firebase Error: Failed to fetch account creation requests:', error);
+      throw new Error(`Failed to load account creation requests: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  // Update account creation request
+  static async updateAccountCreationRequest(requestId: string, updates: any): Promise<void> {
+    try {
+      console.log('🔥 Firebase: Updating account creation request:', requestId);
+      const docRef = doc(db, 'accountCreationRequests', requestId);
+      await updateDoc(docRef, {
+        ...updates,
+        updatedAt: serverTimestamp()
+      });
+      console.log('✅ Firebase: Account creation request updated successfully');
+    } catch (error) {
+      console.error('❌ Firebase Error: Failed to update account creation request:', error);
+      throw new Error(`Failed to update request: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   // Add audit log
   static async addAuditLog(auditData: Omit<AuditLog, 'id' | 'timestamp' | 'createdAt'>): Promise<string> {
     try {

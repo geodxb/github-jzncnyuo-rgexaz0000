@@ -4,6 +4,7 @@ import Card from '../../components/common/Card';
 import Table from '../../components/common/Table';
 import Button from '../../components/common/Button';
 import AddInvestorModal from '../../components/admin/AddInvestorModal';
+import InvestorOnboardingFlow from '../../components/onboarding/InvestorOnboardingFlow';
 import { useInvestors } from '../../hooks/useFirestore';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,6 +12,7 @@ const InvestorsListPage = () => {
   const navigate = useNavigate();
   const { investors, loading, error, refetch } = useInvestors();
   const [addInvestorModalOpen, setAddInvestorModalOpen] = useState(false);
+  const [onboardingFlowOpen, setOnboardingFlowOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortField, setSortField] = useState('name');
@@ -262,12 +264,20 @@ const InvestorsListPage = () => {
               <h2 className="text-2xl font-bold text-gray-900 uppercase tracking-wide">INVESTOR HOLDINGS</h2>
               <p className="text-gray-600 uppercase tracking-wide text-sm">Portfolio management and performance monitoring</p>
             </div>
-            <button
-              onClick={() => setAddInvestorModalOpen(true)}
-              className="px-4 py-2 bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors rounded-lg"
-            >
-              Add New Investor
-            </button>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setOnboardingFlowOpen(true)}
+                className="px-4 py-2 bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors rounded-lg uppercase tracking-wide"
+              >
+                New Investor Onboarding
+              </button>
+              <button
+                onClick={() => setAddInvestorModalOpen(true)}
+                className="px-4 py-2 bg-gray-600 text-white font-medium hover:bg-gray-700 transition-colors rounded-lg uppercase tracking-wide"
+              >
+                Quick Add (Legacy)
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -391,10 +401,10 @@ const InvestorsListPage = () => {
             </p>
             {!searchTerm && statusFilter === 'all' && (
               <button
-                onClick={() => setAddInvestorModalOpen(true)}
+                onClick={() => setOnboardingFlowOpen(true)}
                 className="px-4 py-2 bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors rounded-lg"
               >
-                Add First Investor
+                Start Investor Onboarding
               </button>
             )}
           </div>
@@ -477,6 +487,15 @@ const InvestorsListPage = () => {
       </div>
 
       {/* Add Investor Modal */}
+      <InvestorOnboardingFlow
+        isOpen={onboardingFlowOpen}
+        onClose={() => setOnboardingFlowOpen(false)}
+        onSuccess={() => {
+          setOnboardingFlowOpen(false);
+          // Real-time listener will automatically update the list
+        }}
+      />
+      
       <AddInvestorModal
         isOpen={addInvestorModalOpen}
         onClose={() => setAddInvestorModalOpen(false)}

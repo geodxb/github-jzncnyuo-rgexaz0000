@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import TradingViewChart from '../../components/common/TradingViewChart';
 import TradingViewTickerTape from '../../components/common/TradingViewTickerTape';
+import InvestorOnboardingFlow from '../../components/onboarding/InvestorOnboardingFlow';
 import { useInvestors, useWithdrawalRequests, useTransactions } from '../../hooks/useFirestore';
 import { 
   Settings,
@@ -15,6 +16,7 @@ import {
 
 const AdminDashboard = () => {
   const { user, setGlobalLoading } = useAuth();
+  const [onboardingFlowOpen, setOnboardingFlowOpen] = useState(false);
   const { investors } = useInvestors();
   const { withdrawalRequests } = useWithdrawalRequests();
   const { transactions } = useTransactions();
@@ -243,11 +245,17 @@ const AdminDashboard = () => {
                 <div className="flex items-start space-x-3">
                   <div className="w-2 h-2 bg-gray-600 rounded-full mt-2"></div>
                   <div>
-                    <h4 className="font-semibold text-gray-800 text-sm uppercase tracking-wide">Enhanced: Admin Interface Improvements</h4>
+                    <h4 className="font-semibold text-gray-800 text-sm uppercase tracking-wide">New: Complete Investor Onboarding Flow</h4>
                     <p className="text-gray-700 text-xs mt-1 uppercase tracking-wide">
-                      Improved admin interface with enhanced proof of funds access and streamlined workflow management
+                      Multi-step onboarding process with identity verification, banking details, and governor approval workflow
                     </p>
                     <p className="text-gray-600 text-xs mt-1">Recently updated</p>
+                    <button
+                      onClick={() => setOnboardingFlowOpen(true)}
+                      className="mt-2 px-3 py-1 bg-gray-900 text-white text-xs font-medium rounded hover:bg-gray-800 transition-colors uppercase tracking-wide"
+                    >
+                      Try New Onboarding
+                    </button>
                   </div>
                 </div>
               </div>
@@ -494,6 +502,15 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Investor Onboarding Flow */}
+      <InvestorOnboardingFlow
+        isOpen={onboardingFlowOpen}
+        onClose={() => setOnboardingFlowOpen(false)}
+        onSuccess={() => {
+          setOnboardingFlowOpen(false);
+        }}
+      />
     </DashboardLayout>
   );
 };
