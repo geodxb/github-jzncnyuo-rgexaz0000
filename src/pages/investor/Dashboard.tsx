@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import { useLanguage } from '../../contexts/LanguageContext';
 import WalletOverview from '../../components/investor/WalletOverview';
 import PerformanceChart from '../../components/common/PerformanceChart';
 import TransactionsTable from '../../components/investor/TransactionsTable';
@@ -21,7 +20,6 @@ type TabType = 'performance' | 'transactions' | 'withdrawals' | 'profile' | 'wit
 
 const InvestorDashboard = () => {
   const { user, setGlobalLoading } = useAuth();
-  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<TabType>('performance');
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
@@ -302,8 +300,8 @@ const InvestorDashboard = () => {
   return (
     <DashboardLayout title="Investor Dashboard">
       <div className="mb-6">
-        <h2 className="text-xl font-medium text-gray-800">{t('dashboard.welcome', { name: user?.name || 'Investor' })}</h2>
-        <p className="text-gray-600">{t('dashboard.overview')}</p>
+        <h2 className="text-xl font-medium text-gray-800">Welcome back, {user?.name || 'Investor'}</h2>
+        <p className="text-gray-600">Here's an overview of your trading account</p>
       </div>
       
       {/* Alert Banners */}
@@ -334,7 +332,7 @@ const InvestorDashboard = () => {
             }`}
           >
             <TrendingUp size={18} className="mr-2" />
-            {t('dashboard.performance')}
+            Performance
           </button>
           <button
             onClick={() => setActiveTab('transactions')}
@@ -345,7 +343,7 @@ const InvestorDashboard = () => {
             }`}
           >
             <Clock size={18} className="mr-2" />
-            {t('dashboard.transactions')}
+            Transactions
           </button>
           <button
             onClick={() => setActiveTab('withdrawals')}
@@ -356,7 +354,7 @@ const InvestorDashboard = () => {
             }`}
           >
             <DollarSign size={18} className="mr-2" />
-            {t('withdrawals.requestWithdrawal')}
+            Request Withdrawal
           </button>
           <button
             onClick={() => setActiveTab('withdrawal-history')}
@@ -367,7 +365,7 @@ const InvestorDashboard = () => {
             }`}
           >
             <ArrowDownRight size={18} className="mr-2" />
-            {t('withdrawals.withdrawalHistory')}
+            Withdrawal History
             {activeWithdrawals.length > 0 && (
               <span className="ml-2 px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
                 {activeWithdrawals.length}
@@ -383,7 +381,7 @@ const InvestorDashboard = () => {
             }`}
           >
             <FileText size={18} className="mr-2" />
-            {t('account.profile')} & Contract
+            Profile & Contract
           </button>
         </nav>
       </div>

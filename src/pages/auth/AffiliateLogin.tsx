@@ -2,12 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
-import { useLanguage } from '../../contexts/LanguageContext';
 import LanguageToggle from '../../components/common/LanguageToggle';
 import { Eye, EyeOff, User, Lock } from 'lucide-react';
 
 const AffiliateLogin = () => {
-  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -64,13 +62,13 @@ const AffiliateLogin = () => {
           {/* Affiliate Badge */}
           <div className="flex items-center justify-center mb-8">
             <div className="bg-red-600 text-white px-6 py-2 rounded-full">
-              <span className="text-sm font-medium">{t('auth.affiliate')}</span>
+              <span className="text-sm font-medium">Affiliate</span>
             </div>
           </div>
           
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('auth.login')}</h1>
-          <p className="text-gray-600 text-sm">{t('auth.enterCredentials')}</p>
-          <p className="text-gray-600">{t('auth.welcomeBack')}</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Login</h1>
+          <p className="text-gray-600 text-sm">Please enter your credentials</p>
+          <p className="text-gray-600">Welcome back</p>
         </div>
         
         {error && (
@@ -93,7 +91,7 @@ const AffiliateLogin = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-300 ease-in-out"
-                placeholder={t('auth.username')}
+                placeholder="Username"
                 required
               />
             </div>
@@ -108,7 +106,7 @@ const AffiliateLogin = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-300 ease-in-out"
-                placeholder={t('auth.password')}
+                placeholder="Password"
                 required
               />
               <button
@@ -128,7 +126,7 @@ const AffiliateLogin = () => {
           {/* Need help link */}
           <div className="text-right">
             <a href="#" className="text-sm hover:underline text-red-600 transition-colors duration-300 ease-in-out">
-              {t('auth.needHelp')}
+              Need help?
             </a>
           </div>
           
@@ -141,10 +139,10 @@ const AffiliateLogin = () => {
             {isLoading ? (
               <div className="flex items-center justify-center">
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                {t('auth.signingIn')}
+                Signing in...
               </div>
             ) : (
-              t('auth.login')
+              'Login'
             )}
           </button>
         </form>

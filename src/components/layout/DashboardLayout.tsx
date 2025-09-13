@@ -6,7 +6,6 @@ import NotificationBell from '../common/NotificationBell';
 import LanguageToggle from '../common/LanguageToggle';
 import AnnouncementBanner from '../common/AnnouncementBanner';
 import { useAnnouncements } from '../../hooks/useAnnouncements';
-import { useLanguage } from '../../contexts/LanguageContext';
 import { 
   Menu, 
   X, 
@@ -34,7 +33,6 @@ interface NavItem {
 }
 
 const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
-  const { t } = useLanguage();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [supportChatOpen, setSupportChatOpen] = useState(false);
@@ -54,42 +52,42 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
     if (user?.role === 'investor') {
       // Investors only see Dashboard and Messages
       return [
-        { text: t('nav.dashboard'), path: '/investor' },
-        { text: t('nav.messages'), path: '/investor/messages' }
+        { text: 'Dashboard', path: '/investor' },
+        { text: 'Messages', path: '/investor/messages' }
       ];
     }
     
     // Admin navigation (full access)
     return [
-      { text: t('nav.dashboard'), path: '/admin' },
-      { text: t('nav.messages'), path: '/admin/messages' },
+      { text: 'Dashboard', path: '/admin' },
+      { text: 'Messages', path: '/admin/messages' },
       { 
-        text: t('nav.holdings'), 
+        text: 'Holdings', 
         path: '/admin/investors',
         hasDropdown: true,
         dropdownItems: [
-          { text: t('investors.title'), path: '/admin/investors' },
-          { text: t('investors.activeAccounts'), path: '/admin/investors?status=active' },
-          { text: t('investors.restricted'), path: '/admin/investors?status=restricted' }
+          { text: 'Investor Holdings', path: '/admin/investors' },
+          { text: 'Active Accounts', path: '/admin/investors?status=active' },
+          { text: 'Restricted', path: '/admin/investors?status=restricted' }
         ]
       },
-      { text: t('nav.reports'), path: '/admin/analytics' },
+      { text: 'Reports', path: '/admin/analytics' },
       { 
-        text: t('nav.planning'), 
+        text: 'Planning', 
         path: '/admin/withdrawals',
         hasDropdown: true,
         dropdownItems: [
-          { text: t('withdrawals.title'), path: '/admin/withdrawals' },
+          { text: 'Withdrawal Management', path: '/admin/withdrawals' },
           { text: 'Commission Tracking', path: '/admin/commissions' },
           { text: 'Transaction History', path: '/admin/transactions' }
         ]
       },
       { 
-        text: t('nav.profile'), 
+        text: 'Profile', 
         path: '/admin/settings',
         hasDropdown: true,
         dropdownItems: [
-          { text: t('nav.settings'), path: '/admin/settings' },
+          { text: 'Settings', path: '/admin/settings' },
           { text: 'Performance & Reports', path: '/admin/performance-reports' }
         ]
       },
@@ -207,7 +205,7 @@ const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
                    className="flex items-center space-x-2 text-sm text-gray-600 hover:text-blue-600 transition-colors whitespace-nowrap"
                  >
                    <MessageCircle size={16} />
-                   <span className="hidden lg:inline font-medium">{t('nav.support')}</span>
+                   <span className="hidden lg:inline font-medium">Support</span>
                  </button>
                </div>
               )}

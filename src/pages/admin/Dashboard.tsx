@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useLanguage } from '../../contexts/LanguageContext';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import TradingViewChart from '../../components/common/TradingViewChart';
 import TradingViewTickerTape from '../../components/common/TradingViewTickerTape';
@@ -16,7 +15,6 @@ import {
 
 const AdminDashboard = () => {
   const { user, setGlobalLoading } = useAuth();
-  const { t } = useLanguage();
   const { investors } = useInvestors();
   const { withdrawalRequests } = useWithdrawalRequests();
   const { transactions } = useTransactions();
@@ -131,7 +129,7 @@ const AdminDashboard = () => {
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">{t('nav.holdings')}</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Holdings</h3>
             </div>
             <div className="space-y-4">
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
@@ -156,7 +154,7 @@ const AdminDashboard = () => {
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">{t('dashboard.keyStatistics')}</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Key Statistics</h3>
             </div>
             <div className="space-y-4">
               <div>
@@ -211,7 +209,7 @@ const AdminDashboard = () => {
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">{t('dashboard.whatsNew')}</h3>
+              <h3 className="text-lg font-semibold text-gray-900">What's New</h3>
             </div>
             <div className="space-y-4 max-h-80 overflow-y-auto">
               {/* Latest Updates */}

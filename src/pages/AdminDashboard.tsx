@@ -2,7 +2,6 @@ import WithdrawalRequests from '../components/admin/WithdrawalRequests';
 import InvestorManagement from '../components/admin/InvestorManagement';
 import TradingPerformance from '../components/admin/TradingPerformance';
 import InvestorOnboardingFlow from '../components/onboarding/InvestorOnboardingFlow';
-import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   BarChart3,
@@ -16,17 +15,16 @@ import {
 } from 'lucide-react';
 
 const AdminDashboard = () => {
-  const { t } = useLanguage();
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   const tabs = [
-    { id: 'overview', label: t('overview'), icon: BarChart3 },
-    { id: 'investors', label: t('investors'), icon: Users },
-    { id: 'withdrawals', label: t('withdrawals'), icon: DollarSign },
-    { id: 'performance', label: t('performance'), icon: TrendingUp },
-    { id: 'settings', label: t('settings'), icon: Settings }
+    { id: 'overview', label: 'Overview', icon: BarChart3 },
+    { id: 'investors', label: 'Investors', icon: Users },
+    { id: 'withdrawals', label: 'Withdrawals', icon: DollarSign },
+    { id: 'performance', label: 'Performance', icon: TrendingUp },
+    { id: 'settings', label: 'Settings', icon: Settings }
   ];
 
   const renderContent = () => {
@@ -52,7 +50,7 @@ const AdminDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <h1 className="text-2xl font-bold text-gray-900 uppercase tracking-wide">
-              {t('adminDashboard')}
+              Admin Dashboard
             </h1>
             
             <div className="flex items-center space-x-4">
@@ -71,7 +69,7 @@ const AdminDashboard = () => {
                 className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors uppercase tracking-wide"
               >
                 <LogOut size={16} />
-                <span>{t('logout')}</span>
+                <span>Logout</span>
               </button>
             </div>
           </div>

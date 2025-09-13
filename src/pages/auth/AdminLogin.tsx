@@ -2,12 +2,10 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
-import { useLanguage } from '../../contexts/LanguageContext';
 import LanguageToggle from '../../components/common/LanguageToggle';
 import { Eye, EyeOff, User, Lock } from 'lucide-react';
 
 const AdminLogin = () => {
-  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -91,7 +89,7 @@ const AdminLogin = () => {
                       : 'text-gray-600 hover:text-gray-800'
                   }`}
                 >
-                  {t('auth.admin')}
+                  Admin
                 </button>
                 <button
                   type="button"
@@ -102,14 +100,14 @@ const AdminLogin = () => {
                       : 'text-gray-600 hover:text-gray-800'
                   }`}
                 >
-                  {t('auth.affiliate')}
+                  Affiliate
                 </button>
               </div>
             </div>
           </div>
           
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('auth.login')}</h1>
-          <p className="text-gray-600 text-sm">{t('auth.enterCredentials')}</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Login</h1>
+          <p className="text-gray-600 text-sm">Please enter your credentials</p>
         </div>
         
         {error && (
@@ -132,7 +130,7 @@ const AdminLogin = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={`w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 transition-all duration-300 ease-in-out ${userType === 'admin' ? 'focus:ring-blue-500' : 'focus:ring-red-500'}`}
-                placeholder={t('auth.username')}
+                placeholder="Username"
                 required
               />
             </div>
@@ -149,7 +147,7 @@ const AdminLogin = () => {
                 className={`w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 transition-all duration-300 ease-in-out ${
                   userType === 'admin' ? 'focus:ring-blue-500' : 'focus:ring-red-500'
                 }`}
-                placeholder={t('auth.password')}
+                placeholder="Password"
                 required
               />
               <button
@@ -171,7 +169,7 @@ const AdminLogin = () => {
             <a href="#" className={`text-sm hover:underline ${
               userType === 'admin' ? 'text-blue-600' : 'text-red-600'
             } transition-colors duration-300 ease-in-out`}>
-              {t('auth.needHelp')}
+              Need help?
             </a>
           </div>
           
@@ -188,10 +186,10 @@ const AdminLogin = () => {
             {isLoading ? (
               <div className="flex items-center justify-center">
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                {t('auth.signingIn')}
+                Signing in...
               </div>
             ) : (
-              t('auth.login')
+              'Login'
             )}
           </button>
         </form>

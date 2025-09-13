@@ -2,7 +2,6 @@ import TradingPerformance from '../components/admin/TradingPerformance';
 import GovernorSettings from '../components/governor/GovernorSettings';
 import GovernorWithdrawalRequests from '../components/governor/GovernorWithdrawalRequests';
 import AccountCreationRequests from '../components/governor/AccountCreationRequests';
-import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   Settings,

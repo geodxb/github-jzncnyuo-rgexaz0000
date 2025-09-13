@@ -2,7 +2,6 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useAuth } from './contexts/AuthContext';
-import { LanguageProvider } from './contexts/LanguageContext';
 import { FirestoreService } from './services/firestoreService';
 import LoadingScreen from './components/common/LoadingScreen';
 import PinEntryScreen from './pages/auth/PinEntryScreen';
@@ -156,7 +155,6 @@ function App() {
   }
 
   return (
-    <LanguageProvider>
       <div className="min-h-screen bg-gray-100">
         <Routes>
           {/* Public routes */}
@@ -389,7 +387,6 @@ function App() {
           } />
         </Routes>
       </div>
-    </LanguageProvider>
   );
 }
 

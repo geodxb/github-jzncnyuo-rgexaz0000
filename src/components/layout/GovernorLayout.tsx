@@ -5,7 +5,6 @@ import NotificationBell from '../common/NotificationBell';
 import LanguageToggle from '../common/LanguageToggle';
 import AnnouncementBanner from '../common/AnnouncementBanner';
 import { useAnnouncements } from '../../hooks/useAnnouncements';
-import { useLanguage } from '../../contexts/LanguageContext';
 import { 
   Menu, 
   X, 
@@ -28,7 +27,6 @@ interface NavItem {
 }
 
 const GovernorLayout = ({ children, title }: GovernorLayoutProps) => {
-  const { t } = useLanguage();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const { user, logout } = useAuth();
@@ -39,7 +37,7 @@ const GovernorLayout = ({ children, title }: GovernorLayoutProps) => {
   // Governor navigation items with dropdowns
   const getNavItems = (): NavItem[] => {
     return [
-      { text: t('nav.dashboard').toUpperCase(), path: '/governor' },
+      { text: 'DASHBOARD', path: '/governor' },
       { 
         text: 'ACCOUNTS', 
         path: '/governor/investors',
@@ -60,7 +58,7 @@ const GovernorLayout = ({ children, title }: GovernorLayoutProps) => {
           { text: 'System Logs', path: '/governor/logs' }
         ]
       },
-      { text: t('nav.messages').toUpperCase(), path: '/governor/messages' },
+      { text: 'MESSAGES', path: '/governor/messages' },
       { text: 'CONFIGURATION', path: '/governor/config' }
     ];
   };
