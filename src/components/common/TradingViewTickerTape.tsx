@@ -52,6 +52,18 @@ const TradingViewTickerTape = ({
   useEffect(() => {
     if (!containerRef.current) return;
 
+    // Add error handling for TradingView widget
+    const handleTradingViewError = (error: ErrorEvent) => {
+      if (error.message?.includes('contentWindow is not available')) {
+        // Suppress this specific TradingView iframe error as it's non-critical
+        console.warn('TradingView widget iframe warning (non-critical):', error.message);
+        return;
+      }
+    };
+
+    // Add error listener
+    window.addEventListener('error', handleTradingViewError);
+
     // Clear any existing content
     containerRef.current.innerHTML = '';
 
@@ -101,6 +113,9 @@ const TradingViewTickerTape = ({
 
     // Cleanup function
     return () => {
+      // Remove error listener
+      window.removeEventListener('error', handleTradingViewError);
+      
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
       }

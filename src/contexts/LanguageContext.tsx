@@ -47,31 +47,51 @@ const translate = (translations: Record<string, any>, key: string, params?: Reco
   return value;
 };
 
+const loadTranslations = async (lang: string) => {
+  try {
+    let translations;
+    switch (lang) {
+      case 'en':
+        translations = await import('../translations/en');
+        break;
+      case 'es':
+        translations = await import('../translations/es');
+        break;
+      default:
+        translations = await import('../translations/en');
+    }
+    return translations.default;
+  } catch (error) {
+    console.error(`Failed to load translations for ${lang}:`, error);
+    // Fallback to English translations if loading fails
+    try {
+      const fallback = await import('../translations/en');
+      return fallback.default;
+    } catch (fallbackError) {
+      console.error('Failed to load fallback translations:', fallbackError);
+      // Return minimal translations to prevent app crash
+      return {
+        common: { loading: 'Loading...' },
+        nav: { dashboard: 'Dashboard' },
+        auth: { login: 'Login' },
+        dashboard: { title: 'Dashboard' }
+      };
+    }
+  }
+};
+
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguageState] = useState<Language>('en');
   const [translations, setTranslations] = useState<Record<string, any>>({});
 
   // Load translations
   useEffect(() => {
-    const loadTranslations = async () => {
-      try {
-        const translationModule = await import(`../translations/${language}.ts`);
-        setTranslations(translationModule.default);
-      } catch (error) {
-        console.error(`Failed to load translations for ${language}:`, error);
-        // Fallback to English if translation fails
-        if (language !== 'en') {
-          try {
-            const fallbackModule = await import('../translations/en.ts');
-            setTranslations(fallbackModule.default);
-          } catch (fallbackError) {
-            console.error('Failed to load fallback translations:', fallbackError);
-          }
-        }
-      }
+    const loadTranslationsForLanguage = async () => {
+      const translationData = await loadTranslations(language);
+      setTranslations(translationData);
     };
 
-    loadTranslations();
+    loadTranslationsForLanguage();
   }, [language]);
 
   // Initialize language from localStorage
