@@ -83,19 +83,19 @@ const WithdrawalProgressBar = ({
   const [isFlagging, setIsFlagging] = useState(false);
   const [flagError, setFlagError] = useState('');
   
-  // Get withdrawal flags
-  const { flags, hasUrgentFlag, urgentComment } = useWithdrawalFlags(withdrawalId);
+  // Get withdrawal flags with error handling
+  const { flags = [], hasUrgentFlag = false, urgentComment = '' } = useWithdrawalFlags(withdrawalId) || {};
   
   // Check if user has already requested a flag for this withdrawal
-  const hasUserRequestedFlag = flags.some(flag => 
+  const hasUserRequestedFlag = flags?.some(flag => 
     flag.requestedBy === user?.id && 
     (flag.status === 'pending' || flag.status === 'approved')
-  );
+  ) || false;
   
   // Get approved flag for display
-  const approvedFlag = flags.find(flag => 
+  const approvedFlag = flags?.find(flag => 
     flag.status === 'approved' && flag.isActive
-  );
+  ) || null;
   
   const { user } = useAuth();
 

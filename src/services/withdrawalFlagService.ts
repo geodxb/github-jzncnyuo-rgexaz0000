@@ -195,7 +195,8 @@ export class WithdrawalFlagService {
   // Real-time listener for withdrawal flags
   static subscribeToWithdrawalFlags(
     withdrawalId: string,
-    callback: (flags: WithdrawalFlag[]) => void
+    callback: (flags: WithdrawalFlag[]) => void,
+    errorCallback?: (error: Error) => void
   ): () => void {
     console.log('🔄 Setting up real-time listener for withdrawal flags:', withdrawalId);
     
@@ -209,18 +210,31 @@ export class WithdrawalFlagService {
       flagsQuery,
       (querySnapshot) => {
         console.log('🔄 Withdrawal flags updated in real-time');
-        const flags = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          requestedAt: doc.data().requestedAt?.toDate() || new Date(),
-          reviewedAt: doc.data().reviewedAt?.toDate() || null
-        })) as WithdrawalFlag[];
+        try {
+          const flags = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            requestedAt: doc.data().requestedAt?.toDate() || new Date(),
+            reviewedAt: doc.data().reviewedAt?.toDate() || null
+          })) as WithdrawalFlag[];
         
-        callback(flags);
+          callback(flags);
+        } catch (error) {
+          console.error('Error processing withdrawal flags:', error);
+          if (errorCallback) {
+            errorCallback(error as Error);
+          } else {
+            callback([]);
+          }
+        }
       },
       (error) => {
         console.error('❌ Real-time listener failed for withdrawal flags:', error);
-        callback([]);
+        if (errorCallback) {
+          errorCallback(error as Error);
+        } else {
+          callback([]);
+        }
       }
     );
 

@@ -9,7 +9,9 @@ export const useWithdrawalFlags = (withdrawalId: string) => {
 
   useEffect(() => {
     if (!withdrawalId) {
+      setFlags([]);
       setLoading(false);
+      setError(null);
       return;
     }
 
@@ -20,6 +22,11 @@ export const useWithdrawalFlags = (withdrawalId: string) => {
       setFlags(updatedFlags);
       setLoading(false);
       setError(null);
+    }, (error) => {
+      console.error('🚩 Error in withdrawal flags listener:', error);
+      setFlags([]);
+      setLoading(false);
+      setError(error.message);
     });
 
     // Cleanup listener on unmount
@@ -30,9 +37,9 @@ export const useWithdrawalFlags = (withdrawalId: string) => {
   }, [withdrawalId]);
 
   // Get urgent flag info
-  const urgentFlag = flags.find(flag => 
+  const urgentFlag = flags?.find(flag => 
     flag.isActive && flag.status === 'approved' && (flag.flagType === 'urgent' || flag.priority === 'urgent')
-  );
+  ) || null;
 
   const hasUrgentFlag = !!urgentFlag;
   const urgentComment = urgentFlag?.comment;
