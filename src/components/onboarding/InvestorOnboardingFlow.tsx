@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Modal from '../common/Modal';
+import Button from '../common/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { FirestoreService } from '../../services/firestoreService';
 import { 
@@ -19,7 +21,8 @@ import {
   Download,
   Shield,
   Globe,
-  DollarSign
+  DollarSign,
+  X
 } from 'lucide-react';
 
 // Comprehensive country list
