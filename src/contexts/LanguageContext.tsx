@@ -55,17 +55,20 @@ const loadTranslations = async (lang: string) => {
         translations = await import('../translations/en');
         break;
       case 'es':
-        translations = await import('../translations/es');
+        translations = await import('./translations/es');
+        break;
+      case 'fr':
+        translations = await import('./translations/fr');
         break;
       default:
-        translations = await import('../translations/en');
+        translations = await import('./translations/en');
     }
     return translations.default;
   } catch (error) {
     console.error(`Failed to load translations for ${lang}:`, error);
     // Fallback to English translations if loading fails
     try {
-      const fallback = await import('../translations/en');
+      const fallback = await import('./translations/en');
       return fallback.default;
     } catch (fallbackError) {
       console.error('Failed to load fallback translations:', fallbackError);
