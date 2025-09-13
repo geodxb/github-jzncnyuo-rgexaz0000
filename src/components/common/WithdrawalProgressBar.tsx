@@ -86,6 +86,8 @@ const WithdrawalProgressBar = ({
   // Get withdrawal flags with error handling
   const { flags = [], hasUrgentFlag = false, urgentComment = '' } = useWithdrawalFlags(withdrawalId) || {};
   
+  const { user } = useAuth();
+
   // Check if user has already requested a flag for this withdrawal
   const hasUserRequestedFlag = flags?.some(flag => 
     flag.requestedBy === user?.id && 
@@ -96,8 +98,6 @@ const WithdrawalProgressBar = ({
   const approvedFlag = flags?.find(flag => 
     flag.status === 'approved' && flag.isActive
   ) || null;
-  
-  const { user } = useAuth();
 
   // Get investor country from withdrawal request
   const getInvestorCountry = () => {
